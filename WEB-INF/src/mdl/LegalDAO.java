@@ -96,4 +96,21 @@ public class LegalDAO {
             return new String[]{ rtnMsg == null ? "" : rtnMsg };
         }
     }
+
+    public List<Map<String, Object>> getListAll(String isUse) throws Exception {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        try (Connection conn = DBPool.getConnection();
+             CallableStatement cs = conn.prepareCall("{call uspLawRegulationLegal_GetList(?,?,?)}")) {
+            cs.setString(1, isUse); cs.setInt(2, 0); cs.setInt(3, 0);
+            try (ResultSet rs = cs.executeQuery()) {
+                ResultSetMetaData meta = rs.getMetaData(); int colCnt = meta.getColumnCount();
+                while (rs.next()) {
+                    Map<String, Object> row = new java.util.LinkedHashMap<>();
+                    for (int i = 1; i <= colCnt; i++) row.put(meta.getColumnName(i).toLowerCase(), rs.getObject(i));
+                    rows.add(row);
+                }
+            }
+        }
+        return rows;
+    }
 }
