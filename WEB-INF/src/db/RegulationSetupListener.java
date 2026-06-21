@@ -17,7 +17,7 @@ public class RegulationSetupListener implements ServletContextListener {
         try (Connection conn = DBPool.getConnection()) {
             createAllTables(conn);
             createAllSPs(conn);
-            seedRealDPLData(conn);
+            insertRealDataIfEmpty(conn);
             System.out.println("[DPL] SetupListener 완료");
         } catch (Exception e) {
             System.err.println("[DPL] SetupListener 실패: " + e.getMessage());
@@ -38,13 +38,18 @@ public class RegulationSetupListener implements ServletContextListener {
     }
 
     // ══ 실제 DPL 데이터 초기화 ══════════════════════════════════════
-    private void seedRealDPLData(Connection conn) throws Exception {
+
+    private void insertRealDataIfEmpty(Connection conn) throws Exception {
         try (Statement st = conn.createStatement()) {
-            // 빈 경우만 삽입 (재배포 시 데이터 보존)
             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM dpl_regulation_legal");
             rs.next();
             if (rs.getInt(1) > 0) { System.out.println("[DPL] 데이터 이미 존재 — 스킵"); return; }
         }
+        insertRealData(conn);
+    }
+
+        public void insertRealData(Connection conn) throws Exception {
+        System.out.println("[DPL] 실제 DPL 데이터 삽입 시작");
 
         // ── 규제법률 (실제 DPL 개발서버와 동일) ──
         exec(conn, "SET IDENTITY_INSERT dpl_regulation_legal ON");
