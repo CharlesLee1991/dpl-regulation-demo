@@ -58,6 +58,26 @@ public class AjaxServlet extends HttpServlet {
                     out.print(getCounts());
                     break;
                 }
+
+                // ── 실 MSSQL 연결 테스트 ─────────────────────────────
+                case "db_test": {
+                    long t0 = System.currentTimeMillis();
+                    try {
+                        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+                        String url = "jdbc:sqlserver://121.78.147.103,16868;databaseName=LSAFE;encrypt=false;trustServerCertificate=true;loginTimeout=8";
+                        java.sql.Connection conn = java.sql.DriverManager.getConnection(url, "lsafe", "Lotternd12#$");
+                        java.sql.Statement st = conn.createStatement();
+                        java.sql.ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM LawRegulationLegal WHERE LL_IS_USE='Y'");
+                        int cnt = rs.next() ? rs.getInt(1) : -1;
+                        conn.close();
+                        long ms = System.currentTimeMillis() - t0;
+                        out.print("{\"status\":\"OK\",\"db\":\"LSAFE\",\"host\":\"121.78.147.103,16868\",\"table\":\"LawRegulationLegal\",\"count\":"+cnt+",\"ms\":"+ms+"}");
+                    } catch(Exception ex) {
+                        long ms = System.currentTimeMillis() - t0;
+                        out.print("{\"status\":\"FAIL\",\"error\":\""+escape(ex.getMessage())+"\",\"ms\":"+ms+"}");
+                    }
+                    break;
+                }
                 default:
                     resp.setStatus(400);
                     out.print("{\"error\":\"unknown type\"}");
