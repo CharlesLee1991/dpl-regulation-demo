@@ -8,77 +8,47 @@
   <display-name>DPL JSP Migration</display-name>
   <description>롯데중앙연구소 DPL ASP-JSP 마이그레이션</description>
 
-  <!-- DB 커넥션풀 파라미터 -->
-  <context-param>
-    <param-name>DB_URL</param-name>
+  <context-param><param-name>DB_URL</param-name>
     <param-value>jdbc:sqlserver://mssql.railway.internal:1433;databaseName=DPL_DEMO;encrypt=false;trustServerCertificate=true</param-value>
   </context-param>
-  <context-param>
-    <param-name>DB_USER</param-name>
-    <param-value>sa</param-value>
-  </context-param>
-  <context-param>
-    <param-name>DB_PASS</param-name>
-    <param-value>Dpl#aad20616c463470c958e</param-value>
-  </context-param>
-  <context-param>
-    <param-name>DB_POOL_SIZE</param-name>
-    <param-value>5</param-value>
-  </context-param>
+  <context-param><param-name>DB_USER</param-name><param-value>sa</param-value></context-param>
+  <context-param><param-name>DB_PASS</param-name><param-value>Dpl#aad20616c463470c958e</param-value></context-param>
+  <context-param><param-name>DB_POOL_SIZE</param-name><param-value>5</param-value></context-param>
 
-  <!-- DB Pool 초기화 리스너 -->
-  <listener>
-    <listener-class>db.DBPoolListener</listener-class>
-  </listener>
+  <listener><listener-class>db.DBPoolListener</listener-class></listener>
 
   <!-- RegulationServlet (규제사항) -->
-  <servlet>
-    <servlet-name>RegulationServlet</servlet-name>
-    <servlet-class>ctrl.RegulationServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>RegulationServlet</servlet-name>
-    <url-pattern>/regulation/</url-pattern>
-    <url-pattern>/regulation</url-pattern>
-  </servlet-mapping>
+  <servlet><servlet-name>RegulationServlet</servlet-name><servlet-class>ctrl.RegulationServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>RegulationServlet</servlet-name>
+    <url-pattern>/regulation/</url-pattern><url-pattern>/regulation</url-pattern></servlet-mapping>
 
   <!-- LegalServlet (규제법률) -->
-  <servlet>
-    <servlet-name>LegalServlet</servlet-name>
-    <servlet-class>ctrl.LegalServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>LegalServlet</servlet-name>
-    <url-pattern>/legal/</url-pattern>
-    <url-pattern>/legal</url-pattern>
-  </servlet-mapping>
+  <servlet><servlet-name>LegalServlet</servlet-name><servlet-class>ctrl.LegalServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>LegalServlet</servlet-name>
+    <url-pattern>/legal/</url-pattern><url-pattern>/legal</url-pattern></servlet-mapping>
 
   <!-- NotifyServlet (고시/부속서) -->
-  <servlet>
-    <servlet-name>NotifyServlet</servlet-name>
-    <servlet-class>ctrl.NotifyServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>NotifyServlet</servlet-name>
-    <url-pattern>/notify/</url-pattern>
-    <url-pattern>/notify</url-pattern>
-  </servlet-mapping>
+  <servlet><servlet-name>NotifyServlet</servlet-name><servlet-class>ctrl.NotifyServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>NotifyServlet</servlet-name>
+    <url-pattern>/notify/</url-pattern><url-pattern>/notify</url-pattern></servlet-mapping>
 
-  <!-- 기본 인코딩 필터 -->
+  <!-- SafetyServlet (안전요건) -->
+  <servlet><servlet-name>SafetyServlet</servlet-name><servlet-class>ctrl.SafetyServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>SafetyServlet</servlet-name>
+    <url-pattern>/safety/</url-pattern><url-pattern>/safety</url-pattern></servlet-mapping>
+
+  <!-- ItemsServlet (품목정보 마스터 + 세부품목 디테일) -->
+  <servlet><servlet-name>ItemsServlet</servlet-name><servlet-class>ctrl.ItemsServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>ItemsServlet</servlet-name>
+    <url-pattern>/items_def/</url-pattern><url-pattern>/items_def</url-pattern>
+    <url-pattern>/items_detail/</url-pattern><url-pattern>/items_detail</url-pattern></servlet-mapping>
+
   <filter>
     <filter-name>EncodingFilter</filter-name>
     <filter-class>org.apache.catalina.filters.SetCharacterEncodingFilter</filter-class>
-    <init-param>
-      <param-name>encoding</param-name>
-      <param-value>UTF-8</param-value>
-    </init-param>
+    <init-param><param-name>encoding</param-name><param-value>UTF-8</param-value></init-param>
   </filter>
-  <filter-mapping>
-    <filter-name>EncodingFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-  </filter-mapping>
+  <filter-mapping><filter-name>EncodingFilter</filter-name><url-pattern>/*</url-pattern></filter-mapping>
 
-  <welcome-file-list>
-    <welcome-file>index.jsp</welcome-file>
-  </welcome-file-list>
+  <welcome-file-list><welcome-file>index.jsp</welcome-file></welcome-file-list>
 </web-app>
