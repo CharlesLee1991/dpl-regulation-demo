@@ -42,6 +42,17 @@
     <url-pattern>/regulation</url-pattern>
   </servlet-mapping>
 
+  <!-- LegalServlet (규제법률) -->
+  <servlet>
+    <servlet-name>LegalServlet</servlet-name>
+    <servlet-class>ctrl.LegalServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>LegalServlet</servlet-name>
+    <url-pattern>/legal/</url-pattern>
+    <url-pattern>/legal</url-pattern>
+  </servlet-mapping>
+
   <!-- ── 기본 인코딩 ── -->
   <filter>
     <filter-name>EncodingFilter</filter-name>

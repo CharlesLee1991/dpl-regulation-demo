@@ -48,6 +48,15 @@ public class RegulationSetupListener implements ServletContextListener {
                     REG_DATE DATETIME DEFAULT GETDATE()
                 )
             """);
+        }
+
+        // dpl_regulation_legal 컬럼 보완 (LL_DEPT, REG_USER)
+        try (Statement st = conn.createStatement()) {
+            st.execute("IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='dpl_regulation_legal' AND COLUMN_NAME='LL_DEPT') ALTER TABLE dpl_regulation_legal ADD LL_DEPT NVARCHAR(100) DEFAULT ''");
+            st.execute("IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='dpl_regulation_legal' AND COLUMN_NAME='REG_USER') ALTER TABLE dpl_regulation_legal ADD REG_USER NVARCHAR(50) DEFAULT ''");
+        }
+
+        try (Statement st = conn.createStatement()) {
             st.execute("""
                 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_regulation')
                 CREATE TABLE dpl_regulation (
@@ -131,7 +140,10 @@ public class RegulationSetupListener implements ServletContextListener {
             """);
         }
 
-        // SP: GetInfo (단건 상세)
+        // SP: GetInfo (단건 상세) — LL_TITLE JOIN
+        try (Statement st = conn.createStatement()) {
+            st.execute("IF OBJECT_ID('uspLawRegulation_GetInfo','P') IS NOT NULL DROP PROCEDURE uspLawRegulation_GetInfo");
+        }
         try (Statement st = conn.createStatement()) {
             st.execute("""
                 CREATE PROCEDURE uspLawRegulation_GetInfo
@@ -140,15 +152,17 @@ public class RegulationSetupListener implements ServletContextListener {
                 BEGIN
                     SET NOCOUNT ON;
                     SELECT
-                        LR_IDX, LR_TITLE, LL_IDX,
-                        LR_CONDITION, LR_CERTIFY_GUIDE, LR_PENALTY,
-                        LR_IS_USE,
-                        REG_USER AS LR_REG_USER,
-                        CONVERT(NVARCHAR(19), REG_DATE, 120) AS LR_REG_DATE,
-                        UPD_USER AS LR_UPD_USER,
-                        CONVERT(NVARCHAR(19), UPD_DATE, 120) AS LR_UPD_DATE
-                    FROM dpl_regulation
-                    WHERE LR_IDX = @IDX;
+                        r.LR_IDX, r.LR_TITLE, r.LL_IDX,
+                        ISNULL(l.LL_TITLE, '') AS LL_TITLE,
+                        r.LR_CONDITION, r.LR_CERTIFY_GUIDE, r.LR_PENALTY,
+                        r.LR_IS_USE,
+                        r.REG_USER AS LR_REG_USER,
+                        CONVERT(NVARCHAR(19), r.REG_DATE, 120) AS LR_REG_DATE,
+                        r.UPD_USER AS LR_UPD_USER,
+                        CONVERT(NVARCHAR(19), r.UPD_DATE, 120) AS LR_UPD_DATE
+                    FROM dpl_regulation r
+                    LEFT JOIN dpl_regulation_legal l ON l.LL_IDX = r.LL_IDX
+                    WHERE r.LR_IDX = @IDX;
                 END
             """);
         }
@@ -246,7 +260,99 @@ public class RegulationSetupListener implements ServletContextListener {
             }
         }
 
-        // regulation 시드
+        // ── Legal SP 3종 (uspLawRegulationLegal_*) ──────────────────────
+        try (Statement st = conn.createStatement()) {
+            st.execute("IF OBJECT_ID('uspLawRegulationLegal_GetListPaging','P') IS NOT NULL DROP PROCEDURE uspLawRegulationLegal_GetListPaging");
+        }
+        try (Statement st = conn.createStatement()) {
+            st.execute("""
+                CREATE PROCEDURE uspLawRegulationLegal_GetListPaging
+                    @Page     INT = 1,
+                    @ListSize INT = 20,
+                    @qKey     NVARCHAR(50) = '',
+                    @qWord    NVARCHAR(200) = '',
+                    @qSort    NVARCHAR(50) = ''
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+                    DECLARE @Offset INT = (@Page - 1) * @ListSize;
+                    SELECT LL_IDX, LL_TITLE, ISNULL(LL_DEPT,'') AS LL_DEPT,
+                           LL_IS_USE,
+                           CONVERT(NVARCHAR(10), REG_DATE, 120) AS LL_REG_DATE,
+                           REG_USER AS LL_REG_USER
+                    FROM dpl_regulation_legal
+                    WHERE (@qWord = '' OR (
+                           (@qKey='TITLE' AND LL_TITLE LIKE '%'+@qWord+'%') OR
+                           (@qKey='DEPT'  AND LL_DEPT  LIKE '%'+@qWord+'%') OR
+                           (@qKey=''      AND (LL_TITLE LIKE '%'+@qWord+'%'
+                                           OR  LL_DEPT  LIKE '%'+@qWord+'%'))))
+                    ORDER BY LL_IDX DESC
+                    OFFSET @Offset ROWS FETCH NEXT @ListSize ROWS ONLY;
+                    SELECT COUNT(*) AS TOTAL FROM dpl_regulation_legal
+                    WHERE (@qWord = '' OR (
+                           (@qKey='TITLE' AND LL_TITLE LIKE '%'+@qWord+'%') OR
+                           (@qKey='DEPT'  AND LL_DEPT  LIKE '%'+@qWord+'%') OR
+                           (@qKey=''      AND (LL_TITLE LIKE '%'+@qWord+'%'
+                                           OR  LL_DEPT  LIKE '%'+@qWord+'%'))));
+                END
+            """);
+        }
+        try (Statement st = conn.createStatement()) {
+            st.execute("IF OBJECT_ID('uspLawRegulationLegal_GetInfo','P') IS NOT NULL DROP PROCEDURE uspLawRegulationLegal_GetInfo");
+        }
+        try (Statement st = conn.createStatement()) {
+            st.execute("""
+                CREATE PROCEDURE uspLawRegulationLegal_GetInfo
+                    @IDX INT
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+                    SELECT LL_IDX, LL_TITLE, ISNULL(LL_DEPT,'') AS LL_DEPT, LL_IS_USE,
+                           REG_USER AS LL_REG_USER,
+                           CONVERT(NVARCHAR(19), REG_DATE, 120) AS LL_REG_DATE
+                    FROM dpl_regulation_legal WHERE LL_IDX = @IDX;
+                END
+            """);
+        }
+        try (Statement st = conn.createStatement()) {
+            st.execute("IF OBJECT_ID('uspLawRegulationLegal_PutInfo','P') IS NOT NULL DROP PROCEDURE uspLawRegulationLegal_PutInfo");
+        }
+        try (Statement st = conn.createStatement()) {
+            st.execute("""
+                CREATE PROCEDURE uspLawRegulationLegal_PutInfo
+                    @ACTION   NVARCHAR(10),
+                    @IDX      INT = 0,
+                    @TITLE    NVARCHAR(200),
+                    @DEPT     NVARCHAR(100) = '',
+                    @IS_USE   CHAR(1) = 'Y',
+                    @REG_USER NVARCHAR(50) = '',
+                    @REG_IP   NVARCHAR(40) = '',
+                    @RTN_MSG  NVARCHAR(500) OUTPUT
+                AS
+                BEGIN
+                    SET NOCOUNT ON; SET @RTN_MSG = '';
+                    IF @ACTION = 'ADD'
+                    BEGIN
+                        IF @TITLE='' BEGIN SET @RTN_MSG='법규명을 입력하세요.'; RETURN; END
+                        IF @DEPT ='' BEGIN SET @RTN_MSG='관리부처를 입력하세요.'; RETURN; END
+                        INSERT INTO dpl_regulation_legal (LL_TITLE,LL_DEPT,LL_IS_USE,LL_SORT,REG_DATE)
+                        VALUES (@TITLE,@DEPT,@IS_USE,0,GETDATE());
+                    END
+                    ELSE IF @ACTION = 'MOD'
+                    BEGIN
+                        UPDATE dpl_regulation_legal
+                        SET LL_TITLE=@TITLE, LL_DEPT=@DEPT, LL_IS_USE=@IS_USE
+                        WHERE LL_IDX=@IDX;
+                    END
+                    ELSE IF @ACTION = 'DEL'
+                    BEGIN
+                        DELETE FROM dpl_regulation_legal WHERE LL_IDX=@IDX;
+                    END
+                END
+            """);
+        }
+
+                // regulation 시드
         try (Statement st = conn.createStatement()) {
             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM dpl_regulation");
             rs.next();
