@@ -31,6 +31,7 @@
 <div class="wrap">
   <h2>규제사항 ${action eq 'ADD' ? '등록' : '수정'}</h2>
 
+  <%-- ASP 원본: action=regulation_proc.asp, fields: action/lr_idx + 검색파라미터 --%>
   <form id="frmInfo" method="post" action="?mode=proc" onsubmit="return jfSubmit()">
     <input type="hidden" name="mode"    value="proc">
     <input type="hidden" name="action"  value="${action}">
@@ -41,15 +42,17 @@
     <input type="hidden" name="qLL"     value="${qLL}">
 
     <table class="tbl-form">
+      <%-- ASP 원본 라벨: "관리제도" (= LR_TITLE) --%>
       <tr>
-        <th>규제사항명 <span class="req">*</span></th>
+        <th><i class="req">*</i> 관리제도</th>
         <td>
           <input type="text" id="lr_title" name="lr_title"
-                 value="${fn:escapeXml(info.lr_title)}" placeholder="규제사항명 입력">
+                 value="${fn:escapeXml(info.lr_title)}" placeholder="관리제도명 입력" maxlength="300">
         </td>
       </tr>
+      <%-- ASP 원본: SB_ArrayToSelectBox arListLegal, "ll_idx" --%>
       <tr>
-        <th>규제법률 <span class="req">*</span></th>
+        <th><i class="req">*</i> 규제법률</th>
         <td>
           <select id="ll_idx" name="ll_idx">
             <option value="0">-- 선택 --</option>
@@ -62,26 +65,30 @@
           </select>
         </td>
       </tr>
+      <%-- ASP 원본 라벨: "사전이행요건" (= LR_CONDITION) --%>
       <tr>
-        <th>적용조건</th>
+        <th>사전이행요건</th>
         <td>
           <textarea name="lr_condition">${fn:escapeXml(info.lr_condition)}</textarea>
         </td>
       </tr>
+      <%-- ASP 원본 라벨: "인증표시방법" (= LR_CERTIFY_GUIDE) --%>
       <tr>
-        <th>인증 가이드</th>
+        <th>인증표시방법</th>
         <td>
           <textarea name="lr_certify_guide">${fn:escapeXml(info.lr_certify_guide)}</textarea>
         </td>
       </tr>
+      <%-- ASP 원본 라벨: "벌칙" (= LR_PENALTY) --%>
       <tr>
-        <th>벌칙/과태료</th>
+        <th>벌칙</th>
         <td>
           <textarea name="lr_penalty">${fn:escapeXml(info.lr_penalty)}</textarea>
         </td>
       </tr>
+      <%-- ASP 원본: radio Y/N --%>
       <tr>
-        <th>사용여부 <span class="req">*</span></th>
+        <th><i class="req">*</i> 사용여부</th>
         <td class="radio-group">
           <label>
             <input type="radio" name="lr_is_use" value="Y"
@@ -96,16 +103,17 @@
       <c:if test="${action eq 'MOD'}">
         <tr>
           <th>등록일</th>
-          <td>${info.lr_reg_date} (${info.lr_reg_user})</td>
+          <td>${info.lr_reg_date} (${fn:escapeXml(info.lr_reg_user)})</td>
         </tr>
         <tr>
           <th>수정일</th>
-          <td>${info.lr_upd_date} (${info.lr_upd_user})</td>
+          <td>${info.lr_upd_date} (${fn:escapeXml(info.lr_upd_user)})</td>
         </tr>
       </c:if>
     </table>
 
     <div class="btn-wrap">
+      <%-- ASP 원본: 저장 = jfSubmit() → regulation_proc.asp --%>
       <button type="submit" class="btn btn-primary">저장</button>
       <c:if test="${action eq 'MOD'}">
         <button type="button" class="btn btn-danger"
@@ -114,16 +122,18 @@
             document.getElementById('frmInfo').submit();
           }">삭제</button>
       </c:if>
+      <%-- ASP 원본: jfList() → regulation_list.asp + sLinkParams --%>
       <button type="button" class="btn btn-default"
-        onclick="location.href='?mode=list&page=${page}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}'">목록</button>
+        onclick="location.href='?mode=list&page=${page}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&qLL=${qLL}'">목록</button>
     </div>
     <input type="hidden" id="action-field" name="action" value="${action}">
   </form>
 </div>
 <script>
+/* ASP 원본: jfSubmit() — 3가지 필수 검증 */
 function jfSubmit() {
   var title = document.getElementById('lr_title').value.trim();
-  if (!title) { alert('규제사항명을 입력해주세요.'); document.getElementById('lr_title').focus(); return false; }
+  if (!title) { alert('관리제도명을 입력해주세요.'); document.getElementById('lr_title').focus(); return false; }
   var ll = document.getElementById('ll_idx').value;
   if (!ll || ll === '0') { alert('규제법률을 선택해주세요.'); return false; }
   var isUse = document.querySelector('input[name="lr_is_use"]:checked');

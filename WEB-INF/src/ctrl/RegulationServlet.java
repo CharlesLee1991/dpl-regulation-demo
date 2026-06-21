@@ -78,6 +78,7 @@ public class RegulationServlet extends HttpServlet {
         req.setAttribute("qWord",    qWord);
         req.setAttribute("qSort",    qSort);
         req.setAttribute("qLL",      qLL);
+        req.setAttribute("legalList", dao.getLegalList("Y"));
 
         req.getRequestDispatcher("/jsp/regulation/regulation_list.jsp")
            .forward(req, resp);

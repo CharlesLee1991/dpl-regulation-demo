@@ -40,13 +40,24 @@
 <div class="wrap">
   <h2>규제사항 관리</h2>
 
-  <%-- 검색 폼 --%>
+  <%-- 검색 폼 (ASP 원본: qLL 규제법률 + qKey/qWord) --%>
   <form id="frmSearch" method="get" action="">
     <input type="hidden" name="mode" value="list">
     <div class="search-bar">
+      <%-- 규제법률 드롭다운 (ASP: SB_ArrayToSelectBox arListLegal) --%>
+      <select name="qLL">
+        <option value="0">-- 규제법률 전체 --</option>
+        <c:forEach var="ll" items="${legalList}">
+          <option value="${ll.ll_idx}"
+            <c:if test="${ll.ll_idx == qLL}">selected</c:if>>
+            ${fn:escapeXml(ll.ll_title)}
+          </option>
+        </c:forEach>
+      </select>
+      <%-- 검색어 --%>
       <select name="qKey">
-        <option value=""  <c:if test="${qKey==''}">selected</c:if>>전체</option>
-        <option value="TITLE" <c:if test="${qKey=='TITLE'}">selected</c:if>>제목</option>
+        <option value="" <c:if test="${qKey==''}">selected</c:if>>전체</option>
+        <option value="TITLE" <c:if test="${qKey=='TITLE'}">selected</c:if>>관리제도</option>
       </select>
       <input type="text" name="qWord" value="${fn:escapeXml(qWord)}" placeholder="검색어" style="width:200px">
       <button type="submit" class="btn btn-primary">검색</button>
@@ -62,29 +73,32 @@
 
   <%-- 목록 --%>
   <div class="total-bar">전체 <strong>${total}</strong>건</div>
+  <%-- 컬럼: ASP 원본 = No / 관리제도(LR_TITLE) / 규제법률(LL_TITLE) / 노출(LR_IS_USE) / 등록일 --%>
   <table class="tbl">
     <thead>
       <tr>
-        <th style="width:60px">번호</th>
-        <th>규제사항명</th>
-        <th style="width:100px">사용여부</th>
+        <th style="width:60px">No.</th>
+        <th>관리제도</th>
+        <th style="width:160px">규제법률</th>
+        <th style="width:60px">노출</th>
         <th style="width:130px">등록일</th>
       </tr>
     </thead>
     <tbody>
       <c:choose>
         <c:when test="${empty list}">
-          <tr><td colspan="4" class="center" style="padding:30px;color:#999">데이터가 없습니다.</td></tr>
+          <tr><td colspan="5" class="center" style="padding:30px;color:#999">검색된 내용이 없습니다.</td></tr>
         </c:when>
         <c:otherwise>
           <c:forEach var="row" items="${list}" varStatus="st">
             <tr>
               <td class="center">${total - (page-1)*listSize - st.index}</td>
               <td>
-                <a href="?mode=form&lr_idx=${row.lr_idx}&page=${page}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}">
+                <a href="?mode=form&lr_idx=${row.lr_idx}&page=${page}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&qLL=${qLL}">
                   ${fn:escapeXml(row.lr_title)}
                 </a>
               </td>
+              <td class="center">${fn:escapeXml(row.ll_title)}</td>
               <td class="center">${row.lr_is_use eq 'Y' ? '사용' : '미사용'}</td>
               <td class="center">${row.lr_reg_date}</td>
             </tr>
@@ -97,18 +111,18 @@
   <%-- 페이징 --%>
   <div class="paging">
     <c:if test="${page > 1}">
-      <a href="?mode=list&page=1&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}">◀◀</a>
-      <a href="?mode=list&page=${page-1}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}">◀</a>
+      <a href="?mode=list&page=1&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&qLL=${qLL}">◀◀</a>
+      <a href="?mode=list&page=${page-1}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&qLL=${qLL}">◀</a>
     </c:if>
     <c:forEach begin="1" end="${pageCnt}" var="p">
       <c:if test="${p >= page-4 && p <= page+4}">
-        <a href="?mode=list&page=${p}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}"
+        <a href="?mode=list&page=${p}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&qLL=${qLL}"
            class="${p==page ? 'cur' : ''}">${p}</a>
       </c:if>
     </c:forEach>
     <c:if test="${page < pageCnt}">
-      <a href="?mode=list&page=${page+1}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}">▶</a>
-      <a href="?mode=list&page=${pageCnt}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}">▶▶</a>
+      <a href="?mode=list&page=${page+1}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&qLL=${qLL}">▶</a>
+      <a href="?mode=list&page=${pageCnt}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&qLL=${qLL}">▶▶</a>
     </c:if>
   </div>
 </div>

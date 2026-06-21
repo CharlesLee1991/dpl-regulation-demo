@@ -67,7 +67,10 @@ public class RegulationSetupListener implements ServletContextListener {
             """);
         }
 
-        // SP: GetListPaging (패턴 A, 멀티RS: 목록 + total)
+        // SP: GetListPaging (패턴 A, 멀티RS: 목록 + total) — LL_TITLE JOIN 포함
+        try (Statement st = conn.createStatement()) {
+            st.execute("IF OBJECT_ID('uspLawRegulation_GetListPaging','P') IS NOT NULL DROP PROCEDURE uspLawRegulation_GetListPaging");
+        }
         try (Statement st = conn.createStatement()) {
             st.execute("""
                 CREATE PROCEDURE uspLawRegulation_GetListPaging
@@ -84,12 +87,14 @@ public class RegulationSetupListener implements ServletContextListener {
 
                     SELECT
                         r.LR_IDX, r.LR_TITLE, r.LL_IDX,
+                        ISNULL(l.LL_TITLE, '') AS LL_TITLE,
                         r.LR_IS_USE,
                         CONVERT(NVARCHAR(10), r.REG_DATE, 120) AS LR_REG_DATE,
                         r.REG_USER AS LR_REG_USER,
                         CONVERT(NVARCHAR(10), r.UPD_DATE, 120) AS LR_UPD_DATE,
                         r.UPD_USER AS LR_UPD_USER
                     FROM dpl_regulation r
+                    LEFT JOIN dpl_regulation_legal l ON l.LL_IDX = r.LL_IDX
                     WHERE 1=1
                       AND (@qLL   = 0 OR r.LL_IDX = @qLL)
                       AND (@qWord = '' OR (
