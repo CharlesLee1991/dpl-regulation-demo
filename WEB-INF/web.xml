@@ -17,6 +17,19 @@
 
   <listener><listener-class>db.DBPoolListener</listener-class></listener>
 
+  <!-- ── 정적 파일 서빙 (/static/) ── -->
+  <servlet>
+    <servlet-name>StaticServlet</servlet-name>
+    <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+    <init-param><param-name>debug</param-name><param-value>0</param-value></init-param>
+    <init-param><param-name>listings</param-name><param-value>false</param-value></init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>StaticServlet</servlet-name>
+    <url-pattern>/static/*</url-pattern>
+  </servlet-mapping>
+
   <!-- RegulationServlet -->
   <servlet><servlet-name>RegulationServlet</servlet-name><servlet-class>ctrl.RegulationServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>RegulationServlet</servlet-name>
@@ -37,13 +50,13 @@
   <servlet-mapping><servlet-name>SafetyServlet</servlet-name>
     <url-pattern>/safety/</url-pattern><url-pattern>/safety</url-pattern></servlet-mapping>
 
-  <!-- ItemsServlet (품목정보 마스터 + 세부품목 디테일) -->
+  <!-- ItemsServlet -->
   <servlet><servlet-name>ItemsServlet</servlet-name><servlet-class>ctrl.ItemsServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>ItemsServlet</servlet-name>
     <url-pattern>/items_def/</url-pattern><url-pattern>/items_def</url-pattern>
     <url-pattern>/items_detail/</url-pattern><url-pattern>/items_detail</url-pattern></servlet-mapping>
 
-  <!-- AjaxServlet (드롭다운 JSON API) -->
+  <!-- AjaxServlet -->
   <servlet><servlet-name>AjaxServlet</servlet-name><servlet-class>ctrl.AjaxServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>AjaxServlet</servlet-name>
     <url-pattern>/ajax/</url-pattern><url-pattern>/ajax</url-pattern></servlet-mapping>
@@ -55,7 +68,5 @@
   </filter>
   <filter-mapping><filter-name>EncodingFilter</filter-name><url-pattern>/*</url-pattern></filter-mapping>
 
-  <welcome-file-list>
-    <welcome-file>index.jsp</welcome-file>
-  </welcome-file-list>
+  <welcome-file-list><welcome-file>index.jsp</welcome-file></welcome-file-list>
 </web-app>
