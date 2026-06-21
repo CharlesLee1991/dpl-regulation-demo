@@ -78,6 +78,32 @@ public class AjaxServlet extends HttpServlet {
                     }
                     break;
                 }
+
+                // ── 데이터 초기화 (실제 DPL 데이터로 교체) ──────────
+                case "data_reset": {
+                    try (java.sql.Connection conn = db.DBPool.getConnection()) {
+                        try (java.sql.Statement st = conn.createStatement()) {
+                            st.execute("DELETE FROM dpl_items_detail");
+                            st.execute("DELETE FROM dpl_items");
+                            st.execute("DELETE FROM dpl_safety");
+                            st.execute("DELETE FROM dpl_notify");
+                            st.execute("DELETE FROM dpl_regulation");
+                            st.execute("DELETE FROM dpl_regulation_legal");
+                            // IDENTITY 리셋
+                            for (String tbl : new String[]{"dpl_regulation_legal","dpl_regulation","dpl_notify","dpl_safety","dpl_items","dpl_items_detail"}) {
+                                try { st.execute("DBCC CHECKIDENT('"+tbl+"', RESEED, 0)"); } catch(Exception ignored){}
+                            }
+                        }
+                        // 실제 DPL 데이터 삽입
+                        db.RegulationSetupListener listener = new db.RegulationSetupListener();
+                        listener.insertRealData(conn);
+                        out.print("{\"status\":\"OK\",\"message\":\"실제 DPL 데이터로 초기화 완료\"}");
+                    } catch (Exception ex) {
+                        resp.setStatus(500);
+                        out.print("{\"status\":\"FAIL\",\"error\":\"" + escape(ex.getMessage()) + "\"}");
+                    }
+                    break;
+                }
                 default:
                     resp.setStatus(400);
                     out.print("{\"error\":\"unknown type\"}");
