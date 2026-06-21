@@ -1,9 +1,9 @@
-FROM maven:3.9-eclipse-temurin-11 AS build
+FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY . .
 RUN mvn clean package -q
 
-FROM tomcat:9.0-jdk11
+FROM tomcat:9.0-jdk17-temurin
 # 기존 ROOT 앱 제거 후 regulation war 배포
 RUN rm -rf /usr/local/tomcat/webapps/ROOT
 COPY --from=build /app/target/regulation.war /usr/local/tomcat/webapps/ROOT.war
