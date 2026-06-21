@@ -123,6 +123,10 @@ public class RegulationServlet extends HttpServlet {
 
         req.setAttribute("info",  info);
         req.setAttribute("lrIdx", lrIdx);
+        req.setAttribute("page",  nvl(req.getParameter("page"),  "1"));
+        req.setAttribute("qKey",  nvl(req.getParameter("qKey"),  ""));
+        req.setAttribute("qWord", nvl(req.getParameter("qWord"), ""));
+        req.setAttribute("qLL",   nvl(req.getParameter("qLL"),   "0"));
 
         req.getRequestDispatcher("/jsp/regulation/regulation_view.jsp")
            .forward(req, resp);
