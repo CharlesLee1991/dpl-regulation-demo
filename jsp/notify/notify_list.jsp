@@ -140,7 +140,7 @@ function loadRegulation(llIdx) {
   while ($lr.options.length > 1) $lr.remove(1);
   if (!llIdx || llIdx === '0') return;
   // 서버에서 JSON 조회 (regulation_search.json.asp 대체 — 동일 servlet AJAX 엔드포인트)
-  fetch('?mode=list&ajax=regulation&qLL=' + llIdx)
+  fetch('/ajax/?type=regulation&qLL=' + llIdx)
     .then(function(r){ return r.json(); })
     .then(function(data){
       if (data && data.rows) {
