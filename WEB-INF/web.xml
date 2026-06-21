@@ -17,22 +17,22 @@
 
   <listener><listener-class>db.DBPoolListener</listener-class></listener>
 
-  <!-- RegulationServlet (규제사항) -->
+  <!-- RegulationServlet -->
   <servlet><servlet-name>RegulationServlet</servlet-name><servlet-class>ctrl.RegulationServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>RegulationServlet</servlet-name>
     <url-pattern>/regulation/</url-pattern><url-pattern>/regulation</url-pattern></servlet-mapping>
 
-  <!-- LegalServlet (규제법률) -->
+  <!-- LegalServlet -->
   <servlet><servlet-name>LegalServlet</servlet-name><servlet-class>ctrl.LegalServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>LegalServlet</servlet-name>
     <url-pattern>/legal/</url-pattern><url-pattern>/legal</url-pattern></servlet-mapping>
 
-  <!-- NotifyServlet (고시/부속서) -->
+  <!-- NotifyServlet -->
   <servlet><servlet-name>NotifyServlet</servlet-name><servlet-class>ctrl.NotifyServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>NotifyServlet</servlet-name>
     <url-pattern>/notify/</url-pattern><url-pattern>/notify</url-pattern></servlet-mapping>
 
-  <!-- SafetyServlet (안전요건) -->
+  <!-- SafetyServlet -->
   <servlet><servlet-name>SafetyServlet</servlet-name><servlet-class>ctrl.SafetyServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>SafetyServlet</servlet-name>
     <url-pattern>/safety/</url-pattern><url-pattern>/safety</url-pattern></servlet-mapping>
@@ -43,6 +43,11 @@
     <url-pattern>/items_def/</url-pattern><url-pattern>/items_def</url-pattern>
     <url-pattern>/items_detail/</url-pattern><url-pattern>/items_detail</url-pattern></servlet-mapping>
 
+  <!-- AjaxServlet (드롭다운 JSON API) -->
+  <servlet><servlet-name>AjaxServlet</servlet-name><servlet-class>ctrl.AjaxServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>AjaxServlet</servlet-name>
+    <url-pattern>/ajax/</url-pattern><url-pattern>/ajax</url-pattern></servlet-mapping>
+
   <filter>
     <filter-name>EncodingFilter</filter-name>
     <filter-class>org.apache.catalina.filters.SetCharacterEncodingFilter</filter-class>
@@ -50,5 +55,7 @@
   </filter>
   <filter-mapping><filter-name>EncodingFilter</filter-name><url-pattern>/*</url-pattern></filter-mapping>
 
-  <welcome-file-list><welcome-file>index.jsp</welcome-file></welcome-file-list>
+  <welcome-file-list>
+    <welcome-file>index.jsp</welcome-file>
+  </welcome-file-list>
 </web-app>
