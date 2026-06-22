@@ -97,6 +97,7 @@ public class AjaxServlet extends HttpServlet {
                         // 실제 DPL 데이터 삽입
                         db.RegulationSetupListener listener = new db.RegulationSetupListener();
                         listener.insertRealData(conn);
+                        db.FrontSetupExtension.init(conn);
                         out.print("{\"status\":\"OK\",\"message\":\"실제 DPL 데이터로 초기화 완료\"}");
                     } catch (Exception ex) {
                         resp.setStatus(500);
