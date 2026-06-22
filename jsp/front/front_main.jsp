@@ -35,7 +35,7 @@
   <div class="search_content">
     <h2 class="title">제품 안전정보 통합 검색</h2>
     <p class="text">이제 찾고 싶은 제품 안전정보 관련 소식을<br>간편하게 키워드 입력 또는 테마 검색으로 찾아보세요.</p>
-    <form action="/front/legal/" id="frmSearch" method="get">
+    <form action="/front/search/" id="frmSearch" method="get">
       <div class="search_form">
         <input type="text" id="qWord" name="qWord" placeholder="키워드를 입력해 주세요.">
         <button type="submit">검색</button>
