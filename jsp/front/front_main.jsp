@@ -184,12 +184,18 @@
 
 <script>
 $(function(){
-  // 카운터 롤링
+  // 카운터 롤링 — rollingCounter 플러그인 방식 (개발서버 동일)
   if($.fn.rollingCounter){
-    $('[data-count]').each(function(){
-      var target=$(this), val=parseInt(target.data('count'))||0;
-      $({counter:0}).animate({counter:val},{duration:1500,easing:'swing',
-        step:function(now){target.text(Math.floor(now).toLocaleString());}});
+    $('.counter_ui .counter').rollingCounter({
+      duration: 1500,
+      startValue: 0
+    });
+  } else {
+    // 폴백: 직접 애니메이션
+    $('.counter_ui .counter').each(function(){
+      var $t=$(this), val=parseInt($t.data('count'))||0;
+      $({c:0}).animate({c:val},{duration:1500,
+        step:function(n){$t.text(Math.floor(n).toLocaleString());}});
     });
   }
   // 테마 swiper
