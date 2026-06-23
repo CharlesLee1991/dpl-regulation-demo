@@ -78,7 +78,7 @@ public class FrontServlet extends HttpServlet {
         String w = "WHERE r.LR_IS_USE='Y'";
         if (qLL>0)         w += " AND r.LL_IDX="+qLL;
         if (qLR>0)         w += " AND r.LR_IDX="+qLR;
-        if (!qWord.isEmpty()) w += " AND r.LR_TITLE LIKE N'%"+qWord.replace("'","''")+"'%'";
+        if (!qWord.isEmpty()) w += " AND r.LR_TITLE LIKE N'%"+qWord.replace("'","''")+"%'";
 
         List<Map<String,Object>> list = sql("SELECT r.LR_IDX,r.LR_TITLE,ISNULL(l.LL_TITLE,'') AS LL_TITLE,CONVERT(NVARCHAR(10),r.REG_DATE,120) AS LR_REG_DATE FROM dpl_regulation r LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX "+w+" ORDER BY r.LR_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_regulation r LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX "+w);
@@ -109,7 +109,7 @@ public class FrontServlet extends HttpServlet {
         String w = "WHERE RD_IS_USE='Y'";
         if (!qWord.isEmpty()) {
             String col = "TITLE".equals(qKey)?"RD_TITLE":"TYPE".equals(qKey)?"RD_TYPE":"RD_FACTOR";
-            w += " AND "+col+" LIKE N'%"+qWord.replace("'","''")+"'%'";
+            w += " AND "+col+" LIKE N'%"+qWord.replace("'","''")+"%'";
         }
         List<Map<String,Object>> list = sql("SELECT RD_IDX,RD_TITLE,RD_TYPE,RD_FACTOR,RD_LEVEL,RD_SOURCE,CONVERT(NVARCHAR(10),RD_REG_DATE,120) AS RD_REG_DATE FROM dpl_riskdb "+w+" ORDER BY RD_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_riskdb "+w);
@@ -154,7 +154,7 @@ public class FrontServlet extends HttpServlet {
         int page = toInt(req.getParameter("page"),1); int offset=(page-1)*PS;
         String qWord = nvl(req.getParameter("qWord"),"");
         String w = "WHERE SC_IS_USE='Y'";
-        if (!qWord.isEmpty()) w += " AND SC_TITLE LIKE N'%"+qWord.replace("'","''")+"'%'";
+        if (!qWord.isEmpty()) w += " AND SC_TITLE LIKE N'%"+qWord.replace("'","''")+"%'";
         List<Map<String,Object>> list = sql("SELECT SC_IDX,SC_TITLE,SC_DESC,SC_TYPE FROM dpl_shortclass "+w+" ORDER BY SC_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_shortclass "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
