@@ -161,7 +161,6 @@ $(function(){
                   <td style="text-align:center">
                     <span>${fn:escapeXml(row.ll_title != null ? row.ll_title : '')}</span>
                   </td>
-                  <td style="text-align:center">${row.lr_is_use eq 'Y' ? '사용' : '미사용'}</td>
                   <td style="text-align:center">${row.lr_reg_date}</td>
                 </tr>
               </c:forEach>
