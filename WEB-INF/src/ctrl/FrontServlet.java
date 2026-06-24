@@ -146,7 +146,7 @@ public class FrontServlet extends HttpServlet {
         int idx = toInt(req.getParameter("st_idx"),0);
         List<Map<String,Object>> rows = idx>0?sql("SELECT ST_IDX,ST_DIV,ST_CODE,ST_TITLE,ST_ITEMS,ST_VER_DATE,ST_CONTENT,CONVERT(NVARCHAR(10),ST_REG_DATE,120) AS ST_REG_DATE FROM dpl_standard WHERE ST_IDX="+idx):new ArrayList<>();
         req.setAttribute("info",rows.isEmpty()?new LinkedHashMap<>():rows.get(0));
-        req.getRequestDispatcher("/jsp/front/front_standard_list.jsp").forward(req, resp);
+        req.getRequestDispatcher("/jsp/front/front_standard_view.jsp").forward(req, resp);
     }
 
     // ── 숏클래스 목록 ──────────────────────────────────────────────
@@ -167,9 +167,9 @@ public class FrontServlet extends HttpServlet {
     // ── 숏클래스 상세 ──────────────────────────────────────────────
     private void doShortclassView(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         int idx = toInt(req.getParameter("sc_idx"),0);
-        List<Map<String,Object>> rows = idx>0?sql("SELECT SC_IDX,SC_TITLE,SC_DESC,SC_TYPE,SC_CONTENT,CONVERT(NVARCHAR(10),SC_REG_DATE,120) AS SC_REG_DATE FROM dpl_shortclass WHERE SC_IDX="+idx):new ArrayList<>();
+        List<Map<String,Object>> rows = idx>0?sql("SELECT SC_IDX,SC_TITLE,SC_DESC,SC_TYPE,CONVERT(NVARCHAR(10),SC_REG_DATE,120) AS SC_REG_DATE FROM dpl_shortclass WHERE SC_IDX="+idx):new ArrayList<>();
         req.setAttribute("info",rows.isEmpty()?new LinkedHashMap<>():rows.get(0));
-        req.getRequestDispatcher("/jsp/front/front_shortclass_list.jsp").forward(req, resp);
+        req.getRequestDispatcher("/jsp/front/front_shortclass_view.jsp").forward(req, resp);
     }
 
     // ── 통합검색 ──────────────────────────────────────────────────
