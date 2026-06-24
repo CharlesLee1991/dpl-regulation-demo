@@ -131,7 +131,7 @@ $(function(){
       <table border="0" cellspacing="0" cellpadding="0" style="table-layout:fixed">
         <caption>검색결과</caption>
         <colgroup>
-          <col width="70"><col><col width="200"><col width="80"><col width="110">
+          <col width="70"><col><col width="200"><col width="110">
         </colgroup>
         <thead>
           <tr>
@@ -140,8 +140,7 @@ $(function(){
               관리제도 <c:if test="${fn:startsWith(qSort,'A|TITLE')}">▲</c:if><c:if test="${fn:startsWith(qSort,'D|TITLE')}">▼</c:if>
             </th>
             <th data-act="ls-sort" data-sort="LEGAL" style="cursor:pointer">규제법률</th>
-            <th data-act="ls-sort" data-sort="DISP" style="cursor:pointer">노출</th>
-            <th data-act="ls-sort" data-sort="RDATE" style="cursor:pointer">등록일</th>
+          <th data-act="ls-sort" data-sort="RDATE" style="cursor:pointer">등록일</th>
           </tr>
         </thead>
         <tbody>
