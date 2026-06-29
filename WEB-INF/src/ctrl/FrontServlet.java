@@ -75,13 +75,21 @@ public class FrontServlet extends HttpServlet {
         String qWord = nvl(req.getParameter("qWord"), "");
         String qSort = nvl(req.getParameter("qSort"), "");
         int offset = (page-1)*PS;
-        String w = "WHERE r.LR_IS_USE='Y'";
-        if (qLL>0)         w += " AND r.LL_IDX="+qLL;
-        if (qLR>0)         w += " AND r.LR_IDX="+qLR;
-        if (!qWord.isEmpty()) w += " AND r.LR_TITLE LIKE N'%"+qWord.replace("'","''")+"%'";
+        // 원본 MPRD F2 = 품명(세부품목) 단위 목록 + 적용구분(사용연령)·재질(형태)
+        String w = "WHERE d.LD_IS_USE='Y'";
+        if (qLL>0)         w += " AND d.LL_IDX="+qLL;
+        if (qLR>0)         w += " AND d.LR_IDX="+qLR;
+        if (!qWord.isEmpty()) w += " AND d.LD_ITEM_NAME LIKE N'%"+qWord.replace("'","''")+"%'";
+        String order = "NAME".equals(qSort) ? "d.LD_ITEM_NAME ASC, d.LD_IDX DESC" : "d.LD_IDX DESC";
 
-        List<Map<String,Object>> list = sql("SELECT r.LR_IDX,r.LR_TITLE,ISNULL(l.LL_TITLE,'') AS LL_TITLE,CONVERT(NVARCHAR(10),r.REG_DATE,120) AS LR_REG_DATE FROM dpl_regulation r LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX "+w+" ORDER BY r.LR_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
-        int total = countSql("SELECT COUNT(*) FROM dpl_regulation r LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX "+w);
+        String base = "FROM dpl_items_detail d "
+            + "LEFT JOIN dpl_regulation r ON r.LR_IDX=d.LR_IDX "
+            + "LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=d.LL_IDX "+w;
+        List<Map<String,Object>> list = sql("SELECT d.LD_IDX,d.LR_IDX,d.LD_ITEM_NAME,"
+            + "ISNULL(d.LD_USE_AGE,'') AS LD_USE_AGE,ISNULL(d.LD_MATERIAL,'') AS LD_MATERIAL,"
+            + "ISNULL(l.LL_TITLE,'') AS LL_TITLE,ISNULL(r.LR_TITLE,'') AS LR_TITLE "
+            + base+" ORDER BY "+order+" OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        int total = countSql("SELECT COUNT(*) "+base);
 
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);

@@ -136,17 +136,19 @@ $(function(){
         <thead>
           <tr>
             <th>번호</th>
-            <th data-act="ls-sort" data-sort="TITLE" style="cursor:pointer">
-              관리제도 <c:if test="${fn:startsWith(qSort,'A|TITLE')}">▲</c:if><c:if test="${fn:startsWith(qSort,'D|TITLE')}">▼</c:if>
+            <th data-act="ls-sort" data-sort="NAME" style="cursor:pointer">
+              품명 <c:if test="${qSort eq 'NAME'}">▲</c:if>
             </th>
-            <th data-act="ls-sort" data-sort="LEGAL" style="cursor:pointer">규제법률</th>
-          <th data-act="ls-sort" data-sort="RDATE" style="cursor:pointer">등록일</th>
+            <th>적용구분</th>
+            <th>재질(형태)</th>
+            <th>규제법률</th>
+            <th>관리제도</th>
           </tr>
         </thead>
         <tbody>
           <c:choose>
             <c:when test="${empty list}">
-              <tr><td colspan="5" style="text-align:center;padding:40px;color:#999">검색된 결과가 없습니다.</td></tr>
+              <tr><td colspan="6" style="text-align:center;padding:40px;color:#999">검색된 결과가 없습니다.</td></tr>
             </c:when>
             <c:otherwise>
               <c:forEach var="row" items="${list}" varStatus="st">
@@ -154,13 +156,13 @@ $(function(){
                   <td style="text-align:center">${total-(page-1)*10-st.index}</td>
                   <td class="td_left">
                     <a href="/front/legal/view?lr_idx=${row.lr_idx}">
-                      <span>${fn:escapeXml(row.lr_title)}</span>
+                      <span>${fn:escapeXml(row.ld_item_name)}</span>
                     </a>
                   </td>
-                  <td style="text-align:center">
-                    <span>${fn:escapeXml(row.ll_title != null ? row.ll_title : '')}</span>
-                  </td>
-                  <td style="text-align:center">${row.lr_reg_date}</td>
+                  <td style="text-align:center"><span>${fn:escapeXml(row.ld_use_age)}</span></td>
+                  <td style="text-align:center"><span>${fn:escapeXml(row.ld_material)}</span></td>
+                  <td style="text-align:center"><span>${fn:escapeXml(row.lr_title)}</span></td>
+                  <td style="text-align:center"><span>${fn:escapeXml(row.ll_title)}</span></td>
                 </tr>
               </c:forEach>
             </c:otherwise>
