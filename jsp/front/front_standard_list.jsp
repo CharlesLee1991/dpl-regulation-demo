@@ -34,18 +34,51 @@
     <form id="frmSearch" method="get" action="/front/standard/">
       <input type="hidden" name="qSort" id="qSort" value="${fn:escapeXml(qSort)}">
       <div class="search_table"><table border="0" cellspacing="0" cellpadding="0">
-        <colgroup><col width="149"><col width="*"></colgroup>
+        <colgroup><col width="149"><col width="*"><col width="100"><col width="*"></colgroup>
         <tbody>
           <tr>
             <th>키워드</th>
-            <td>
-              <select name="qKey">
-                <option value="TITLE">기준서명</option>
-                <option value="CODE">기준서번호</option>
+            <td colspan="3">
+              <select name="qKey" id="qKey">
+                <option value="ITEMS" <c:if test="${qKey=='ITEMS'}">selected</c:if>>적용품목군</option>
+                <option value="CODE" <c:if test="${qKey=='CODE'}">selected</c:if>>기준서번호</option>
+                <option value="TITLE" <c:if test="${qKey=='TITLE'}">selected</c:if>>기준서명</option>
               </select>
-              <input type="text" name="qWord" value="${fn:escapeXml(qWord)}">
+              <input type="text" name="qWord" id="qWord" value="${fn:escapeXml(qWord)}">
               <button type="submit" class="btn btn_style_01">검색</button>
-              <button type="button" class="btn btn_style_02" onclick="$('#frmSearch input[type=text]').val('');$('#frmSearch').submit()">초기화</button>
+              <button type="button" class="btn btn_style_02" onclick="$('#qKey').val('ITEMS');$('#qWord').val('');$('#qCate').val('0');$('#qLD').val('0');$('#frmSearch').submit()">초기화</button>
+            </td>
+          </tr>
+          <tr>
+            <th>카테고리</th>
+            <td colspan="3">
+              <select name="qCate" id="qCate">
+                <option value="0" <c:if test="${empty qCate || qCate=='0'}">selected</c:if>>전체</option>
+                <option value="1" <c:if test="${qCate=='1'}">selected</c:if>>패션잡화</option>
+                <option value="2" <c:if test="${qCate=='2'}">selected</c:if>>취미·스포츠</option>
+                <option value="3" <c:if test="${qCate=='3'}">selected</c:if>>주방용품</option>
+                <option value="4" <c:if test="${qCate=='4'}">selected</c:if>>청소·욕실</option>
+                <option value="5" <c:if test="${qCate=='5'}">selected</c:if>>출산·유아동</option>
+                <option value="6" <c:if test="${qCate=='6'}">selected</c:if>>뷰티·퍼스널케어</option>
+                <option value="7" <c:if test="${qCate=='7'}">selected</c:if>>문구·OA</option>
+              </select>
+              <select name="qCate2" id="qCate2"><option value="0">카테고리 선택</option></select>
+              <select name="qCate3" id="qCate3"><option value="0">카테고리 선택</option></select>
+            </td>
+          </tr>
+          <tr>
+            <th>기준 구분</th>
+            <td>
+              <select name="qLD" id="qLD">
+                <option value="0" <c:if test="${empty qLD || qLD=='0'}">selected</c:if>>선택해 주세요</option>
+                <option value="공통" <c:if test="${qLD=='공통'}">selected</c:if>>공통 관리기준</option>
+                <option value="품질기준" <c:if test="${qLD=='품질기준'}">selected</c:if>>품질 관리기준</option>
+                <option value="인스펙션" <c:if test="${qLD=='인스펙션'}">selected</c:if>>인스펙션</option>
+              </select>
+            </td>
+            <th>개정일</th>
+            <td>
+              <input type="text" class="inp" readonly placeholder="검색 기간을 선택해 주세요" style="width:200px;background:#fafafa">
             </td>
           </tr>
         </tbody>

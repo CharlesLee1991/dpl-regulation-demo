@@ -183,14 +183,25 @@ public class FrontServlet extends HttpServlet {
     // ── 롯데스탠다드 목록 ──────────────────────────────────────────
     private void doStandardList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         int page = toInt(req.getParameter("page"),1); int offset=(page-1)*PS;
+        String qKey  = nvl(req.getParameter("qKey"),"ITEMS");
         String qWord = nvl(req.getParameter("qWord"),"");
+        String qCate = nvl(req.getParameter("qCate"),"0");
+        String qLD   = nvl(req.getParameter("qLD"),"0");
         String w = "WHERE ST_IS_USE='Y'";
-        if (!qWord.isEmpty()) w += " AND (ST_TITLE LIKE N'%"+qWord.replace("'","''")+"'%' OR ST_CODE LIKE N'%"+qWord.replace("'","''")+"'%')";
+        if (!qWord.isEmpty()) {
+            String sw = qWord.replace("'","''");
+            if      ("CODE".equals(qKey))  w += " AND ST_CODE LIKE N'%"+sw+"%'";
+            else if ("TITLE".equals(qKey)) w += " AND ST_TITLE LIKE N'%"+sw+"%'";
+            else                           w += " AND ST_ITEMS LIKE N'%"+sw+"%'";
+        }
+        if (!"0".equals(qCate) && !qCate.isEmpty()) w += " AND ST_CATE="+toInt(qCate,0);
+        if (!"0".equals(qLD)   && !qLD.isEmpty())   w += " AND ST_DIV=N'"+qLD.replace("'","''")+"'";
         List<Map<String,Object>> list = sql("SELECT ST_IDX,ST_DIV,ST_CODE,ST_TITLE,ST_ITEMS,ST_VER_DATE FROM dpl_standard "+w+" ORDER BY ST_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_standard "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
-        req.setAttribute("qWord",qWord);
+        req.setAttribute("qKey",qKey); req.setAttribute("qWord",qWord);
+        req.setAttribute("qCate",qCate); req.setAttribute("qLD",qLD);
         req.getRequestDispatcher("/jsp/front/front_standard_list.jsp").forward(req, resp);
     }
 
