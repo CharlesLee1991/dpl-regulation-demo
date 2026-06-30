@@ -35,6 +35,8 @@ public class FrontServlet extends HttpServlet {
                 doMain(req, resp);
             } else if (uri.startsWith("/front/legal/view")) {
                 doLegalView(req, resp);
+            } else if (uri.startsWith("/front/legal/") && "revise".equals(req.getParameter("tab"))) {
+                doLegalRevise(req, resp);
             } else if (uri.startsWith("/front/legal/")) {
                 doLegalList(req, resp);
             } else if (uri.startsWith("/front/safety/view")) {
@@ -97,6 +99,37 @@ public class FrontServlet extends HttpServlet {
         req.setAttribute("legalList",sql("SELECT LL_IDX,LL_TITLE FROM dpl_regulation_legal WHERE LL_IS_USE='Y' ORDER BY LL_SORT"));
         req.setAttribute("regulationList",qLL>0?sql("SELECT LR_IDX,LR_TITLE FROM dpl_regulation WHERE LR_IS_USE='Y' AND LL_IDX="+qLL+" ORDER BY LR_TITLE"):new ArrayList<>());
         req.getRequestDispatcher("/jsp/front/front_legal_list.jsp").forward(req, resp);
+    }
+
+    // ── 법규 제·개정 정보 (F3) ─────────────────────────────────────
+    private void doLegalRevise(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        int page = toInt(req.getParameter("page"), 1);
+        String qKey  = nvl(req.getParameter("qKey"), "");
+        String qWord = nvl(req.getParameter("qWord"), "");
+        String qType = nvl(req.getParameter("qC7"), "");   // 고시유형
+        int offset = (page-1)*PS;
+
+        String w = "WHERE n.LN_IS_USE='Y'";
+        if (!qType.isEmpty()) w += " AND n.LN_TYPE=N'"+qType.replace("'","''")+"'";
+        if (!qWord.isEmpty()) {
+            String sw = qWord.replace("'","''");
+            // qKey: TITLE/CONT/COL1(고시번호)/COL2(고시명)/COL5(담당부처)/COL8(품목)
+            if ("COL5".equals(qKey))      w += " AND n.LN_DEPT LIKE N'%"+sw+"%'";
+            else if ("COL8".equals(qKey)) w += " AND n.LN_ITEM LIKE N'%"+sw+"%'";
+            else                          w += " AND n.LN_TITLE LIKE N'%"+sw+"%'";
+        }
+        String base = "FROM dpl_notify n "+w;
+        List<Map<String,Object>> list = sql("SELECT n.LN_IDX,n.LN_TITLE,"
+            + "ISNULL(n.LN_TYPE,'') AS LN_TYPE,ISNULL(n.LN_ITEM,'') AS LN_ITEM,"
+            + "ISNULL(n.LN_NOTI_DATE,'') AS LN_NOTI_DATE,ISNULL(n.LN_EXEC_DATE,'') AS LN_EXEC_DATE,"
+            + "ISNULL(n.LN_DEPT,'') AS LN_DEPT "
+            + base+" ORDER BY n.LN_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        int total = countSql("SELECT COUNT(*) "+base);
+
+        req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
+        req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
+        req.setAttribute("qKey",qKey); req.setAttribute("qWord",qWord); req.setAttribute("qC7",qType);
+        req.getRequestDispatcher("/jsp/front/front_legal_revise_list.jsp").forward(req, resp);
     }
 
     // ── 법규정보 상세 ──────────────────────────────────────────────
