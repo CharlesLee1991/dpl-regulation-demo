@@ -147,16 +147,28 @@ public class FrontServlet extends HttpServlet {
         String qKey  = nvl(req.getParameter("qKey"),"TITLE");
         String qWord = nvl(req.getParameter("qWord"),"");
         String qSort = nvl(req.getParameter("qSort"),"");
+        String qCate = nvl(req.getParameter("qCate"),"0");
+        String qLT   = nvl(req.getParameter("qLT"),"0");
+        String qLL   = nvl(req.getParameter("qLL"),"0");
         String w = "WHERE RD_IS_USE='Y'";
         if (!qWord.isEmpty()) {
-            String col = "TITLE".equals(qKey)?"RD_TITLE":"TYPE".equals(qKey)?"RD_TYPE":"RD_FACTOR";
-            w += " AND "+col+" LIKE N'%"+qWord.replace("'","''")+"%'";
+            String sw = qWord.replace("'","''");
+            String col;
+            if      ("FACTOR".equals(qKey))   col="RD_FACTOR";
+            else if ("CONTENTS".equals(qKey)) col="RD_CONTENT";
+            else if ("KEYWORD".equals(qKey))  col="RD_TITLE";   // 키워드=제목 매칭
+            else                              col="RD_TITLE";
+            w += " AND "+col+" LIKE N'%"+sw+"%'";
         }
+        if (!"0".equals(qCate) && !qCate.isEmpty()) w += " AND RD_CATE="+toInt(qCate,0);
+        if (!"0".equals(qLT)   && !qLT.isEmpty())   w += " AND RD_TYPE=N'"+qLT.replace("'","''")+"'";
+        if (!"0".equals(qLL)   && !qLL.isEmpty())   w += " AND RD_LEVEL="+toInt(qLL,0);
         List<Map<String,Object>> list = sql("SELECT RD_IDX,RD_TITLE,RD_TYPE,RD_FACTOR,RD_LEVEL,RD_SOURCE,CONVERT(NVARCHAR(10),RD_REG_DATE,120) AS RD_REG_DATE FROM dpl_riskdb "+w+" ORDER BY RD_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_riskdb "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
         req.setAttribute("qKey",qKey); req.setAttribute("qWord",qWord); req.setAttribute("qSort",qSort);
+        req.setAttribute("qCate",qCate); req.setAttribute("qLT",qLT); req.setAttribute("qLL",qLL);
         req.getRequestDispatcher("/jsp/front/front_riskdb_list.jsp").forward(req, resp);
     }
 

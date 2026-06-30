@@ -35,26 +35,68 @@
     <form id="frmSearch" method="get" action="/front/safety/">
       <input type="hidden" name="qSort" id="qSort" value="${fn:escapeXml(qSort)}">
       <div class="search_table"><table border="0" cellspacing="0" cellpadding="0">
-        <colgroup><col width="149"><col width="*"></colgroup>
+        <colgroup><col width="149"><col width="*"><col width="100"><col width="*"></colgroup>
         <tbody>
           <tr>
             <th>키워드</th>
-            <td>
+            <td colspan="3">
               <select name="qKey" id="qKey">
                 <option value="TITLE" <c:if test="${qKey=='TITLE'}">selected</c:if>>상품명</option>
-                <option value="TYPE" <c:if test="${qKey=='TYPE'}">selected</c:if>>위해유형</option>
+                <option value="KEYWORD" <c:if test="${qKey=='KEYWORD'}">selected</c:if>>키워드</option>
                 <option value="FACTOR" <c:if test="${qKey=='FACTOR'}">selected</c:if>>위해요인</option>
+                <option value="CONTENTS" <c:if test="${qKey=='CONTENTS'}">selected</c:if>>위해내용</option>
               </select>
               <input type="text" name="qWord" id="qWord" value="${fn:escapeXml(qWord)}">
               <button type="submit" class="btn btn_style_01">검색</button>
-              <button type="button" class="btn btn_style_02" onclick="$('#qWord').val('');$('#frmSearch').submit()">초기화</button>
+              <button type="button" class="btn btn_style_02" onclick="$('#qKey').val('TITLE');$('#qWord').val('');$('#qCate').val('0');$('#qLT').val('0');$('#qLL').val('0');$('#frmSearch').submit()">초기화</button>
+            </td>
+          </tr>
+          <tr>
+            <th>카테고리</th>
+            <td colspan="3">
+              <select name="qCate" id="qCate">
+                <option value="0" <c:if test="${empty qCate || qCate=='0'}">selected</c:if>>전체</option>
+                <option value="1" <c:if test="${qCate=='1'}">selected</c:if>>패션잡화</option>
+                <option value="2" <c:if test="${qCate=='2'}">selected</c:if>>취미·스포츠</option>
+                <option value="3" <c:if test="${qCate=='3'}">selected</c:if>>주방용품</option>
+                <option value="4" <c:if test="${qCate=='4'}">selected</c:if>>청소·욕실</option>
+                <option value="5" <c:if test="${qCate=='5'}">selected</c:if>>출산·유아동</option>
+                <option value="6" <c:if test="${qCate=='6'}">selected</c:if>>뷰티·퍼스널케어</option>
+                <option value="7" <c:if test="${qCate=='7'}">selected</c:if>>문구·OA</option>
+              </select>
+              <select name="qCate2" id="qCate2"><option value="0">카테고리 선택</option></select>
+              <select name="qCate3" id="qCate3"><option value="0">카테고리 선택</option></select>
+            </td>
+          </tr>
+          <tr>
+            <th>위해유형</th>
+            <td>
+              <select name="qLT" id="qLT">
+                <option value="0" <c:if test="${empty qLT || qLT=='0'}">selected</c:if>>선택해 주세요</option>
+                <option value="화학적결함" <c:if test="${qLT=='화학적결함'}">selected</c:if>>화학적결함</option>
+                <option value="물리적결함" <c:if test="${qLT=='물리적결함'}">selected</c:if>>물리적결함</option>
+                <option value="생물학적결함" <c:if test="${qLT=='생물학적결함'}">selected</c:if>>생물학적결함</option>
+                <option value="환경적결함" <c:if test="${qLT=='환경적결함'}">selected</c:if>>환경적결함</option>
+                <option value="전기적결함" <c:if test="${qLT=='전기적결함'}">selected</c:if>>전기적결함</option>
+              </select>
+            </td>
+            <th>위해등급</th>
+            <td>
+              <select name="qLL" id="qLL">
+                <option value="0" <c:if test="${empty qLL || qLL=='0'}">selected</c:if>>선택해 주세요</option>
+                <option value="1" <c:if test="${qLL=='1'}">selected</c:if>>관심</option>
+                <option value="2" <c:if test="${qLL=='2'}">selected</c:if>>주의</option>
+                <option value="3" <c:if test="${qLL=='3'}">selected</c:if>>경계</option>
+                <option value="4" <c:if test="${qLL=='4'}">selected</c:if>>심각</option>
+              </select>
             </td>
           </tr>
         </tbody>
       </table></div>
     </form>
     <div class="btn_r" style="text-align:right;margin-bottom:8px">
-      <span style="color:#555;font-size:13px">총 <em style="color:#1565c0;font-weight:bold">${total}</em>건</span>
+      <button type="button" class="btn btn_style_03" onclick="alert('엑셀저장은 데모에서 준비 중입니다.')">엑셀저장</button>
+      <span style="color:#555;font-size:13px;margin-left:10px">총 <em style="color:#1565c0;font-weight:bold">${total}</em>건</span>
     </div>
     <div class="table_list_style_01">
       <table border="0" cellspacing="0" cellpadding="0">
