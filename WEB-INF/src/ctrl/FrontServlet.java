@@ -109,7 +109,7 @@ public class FrontServlet extends HttpServlet {
         String qType = nvl(req.getParameter("qC7"), "");   // 고시유형
         int offset = (page-1)*PS;
 
-        String w = "WHERE n.LN_IS_USE='Y'";
+        String w = "WHERE n.LN_IS_USE='Y' AND ISNULL(n.LN_TYPE,'')<>''";
         if (!qType.isEmpty()) w += " AND n.LN_TYPE=N'"+qType.replace("'","''")+"'";
         if (!qWord.isEmpty()) {
             String sw = qWord.replace("'","''");

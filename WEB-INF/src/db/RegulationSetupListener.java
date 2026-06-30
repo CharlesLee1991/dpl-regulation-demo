@@ -18,6 +18,7 @@ public class RegulationSetupListener implements ServletContextListener {
             createAllTables(conn);
             createAllSPs(conn);
             insertRealDataIfEmpty(conn);
+            seedReviseAlways(conn);   // F3 제·개정 시드 — DB 기존데이터 유무와 무관하게 idempotent 실행
             System.out.println("[DPL] SetupListener 완료");
         } catch (Exception e) {
             System.err.println("[DPL] SetupListener 실패: " + e.getMessage());
@@ -52,6 +53,21 @@ public class RegulationSetupListener implements ServletContextListener {
             if (rs.getInt(1) > 0) { System.out.println("[DPL] 데이터 이미 존재 — 스킵"); return; }
         }
         insertRealData(conn);
+    }
+
+    // ── F3 법규 제·개정 정보 시드 (early-return 무관, idempotent) ──
+    private void seedReviseAlways(Connection conn) throws Exception {
+        exec(conn, "IF NOT EXISTS (SELECT 1 FROM dpl_notify WHERE LN_IDX=101) BEGIN SET IDENTITY_INSERT dpl_notify ON; " +
+            "INSERT INTO dpl_notify (LN_IDX,LN_TITLE,LN_TYPE,LN_ITEM,LN_NOTI_DATE,LN_EXEC_DATE,LN_DEPT,LN_IS_USE,LN_REG_DATE) VALUES " +
+            "(101,N'「위생용품의 회수·폐기 등에 관한 규정」 제정고시(안) 행정예고',N'행정예고',N'위생용품',N'2024-01-23',N'',N'식품의약품안전처','Y','2024-01-23'),"  +
+            "(102,N'안전확인대상 생활용품(건전지) 안전기준 개정(안) 행정예고',N'행정예고',N'생활용품',N'2024-01-23',N'',N'국가기술표준원','Y','2024-01-23'),"  +
+            "(103,N'(참고) 화평법·화관법 등 5개 환경법안 국회 통과',N'행정예고',N'화학제품',N'',N'',N'환경부','Y','2024-01-15'),"  +
+            "(104,N'국민의 편익 증진과 건강 확보를 위한 식약처 소관 법률 개정안 국회 본회의 통과',N'행정예고',N'화장품',N'',N'',N'식품의약품안전처','Y','2024-01-10'),"  +
+            "(105,N'「의약외품 제조 및 품질관리기준(GMP) 가이던스(민원인 안내서)」 제정 안내의 건',N'확정고시',N'의약외품',N'2023-11-29',N'2023-11-29',N'의약외품정책과','Y','2023-11-29'),"  +
+            "(106,N'식약처, 화장품 추출물 원료의 함량 기재법 안내',N'확정고시',N'화장품',N'2023-11-24',N'2023-11-24',N'바이오생약국 화장품정책과','Y','2023-11-24'),"  +
+            "(107,N'안전기준준수대상 생활용품(가정용 섬유제품)의 안전기준 개정(안) 행정예고',N'행정예고',N'생활용품',N'2023-11-14',N'',N'생활어린이제품안전과','Y','2023-11-14'),"  +
+            "(108,N'「자원의 절약과 재활용 촉진에 관한 법률」 시행규칙 일부개정령안 입법예고',N'입법예고',N'공통',N'2023-11-07',N'',N'환경부','Y','2023-11-07'); " +
+            "SET IDENTITY_INSERT dpl_notify OFF; END");
     }
 
         public void insertRealData(Connection conn) throws Exception {
@@ -102,17 +118,6 @@ public class RegulationSetupListener implements ServletContextListener {
             "(10,N'표시·광고 내용의 실증에 관한 운영고시',9,10,N'2023-04-01 개정','Y',GETDATE())");
         exec(conn, "SET IDENTITY_INSERT dpl_notify OFF");
         // ── F3 법규 제·개정 정보 샘플 시드 (IDs 101~108 — 기존 1~10과 비충돌, 재실행 시 중복 방지) ──
-        exec(conn, "IF NOT EXISTS (SELECT 1 FROM dpl_notify WHERE LN_IDX=101) BEGIN SET IDENTITY_INSERT dpl_notify ON; " +
-            "INSERT INTO dpl_notify (LN_IDX,LN_TITLE,LN_TYPE,LN_ITEM,LN_NOTI_DATE,LN_EXEC_DATE,LN_DEPT,LN_IS_USE,LN_REG_DATE) VALUES " +
-            "(101,N'「위생용품의 회수·폐기 등에 관한 규정」 제정고시(안) 행정예고',N'행정예고',N'위생용품',N'2024-01-23',N'',N'식품의약품안전처','Y','2024-01-23'),"  +
-            "(102,N'안전확인대상 생활용품(건전지) 안전기준 개정(안) 행정예고',N'행정예고',N'생활용품',N'2024-01-23',N'',N'국가기술표준원','Y','2024-01-23'),"  +
-            "(103,N'(참고) 화평법·화관법 등 5개 환경법안 국회 통과',N'행정예고',N'화학제품',N'',N'',N'환경부','Y','2024-01-15'),"  +
-            "(104,N'국민의 편익 증진과 건강 확보를 위한 식약처 소관 법률 개정안 국회 본회의 통과',N'행정예고',N'화장품',N'',N'',N'식품의약품안전처','Y','2024-01-10'),"  +
-            "(105,N'「의약외품 제조 및 품질관리기준(GMP) 가이던스(민원인 안내서)」 제정 안내의 건',N'확정고시',N'의약외품',N'2023-11-29',N'2023-11-29',N'의약외품정책과','Y','2023-11-29'),"  +
-            "(106,N'식약처, 화장품 추출물 원료의 함량 기재법 안내',N'확정고시',N'화장품',N'2023-11-24',N'2023-11-24',N'바이오생약국 화장품정책과','Y','2023-11-24'),"  +
-            "(107,N'안전기준준수대상 생활용품(가정용 섬유제품)의 안전기준 개정(안) 행정예고',N'행정예고',N'생활용품',N'2023-11-14',N'',N'생활어린이제품안전과','Y','2023-11-14'),"  +
-            "(108,N'「자원의 절약과 재활용 촉진에 관한 법률」 시행규칙 일부개정령안 입법예고',N'입법예고',N'공통',N'2023-11-07',N'',N'환경부','Y','2023-11-07'); " +
-            "SET IDENTITY_INSERT dpl_notify OFF; END");
 
         // ── 안전요건 ──
         exec(conn, "SET IDENTITY_INSERT dpl_safety ON");
