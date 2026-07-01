@@ -10,8 +10,15 @@
 <script src="/static/js/jquery-1.8.3.min.js"></script>
 <script src="/static/js/swiper-bundle.min.js"></script>
 <script src="/static/js/front_common.js"></script>
+<script type="text/javascript">
+function jfSearch(){
+  if ($('#qSearchWord').val() == '') { alert('검색어를 입력해주세요'); return false; }
+  return true;
+}
+$(document).ready(function(){ $("#frmSearch").submit(jfSearch); });
+</script>
 </head><body>
-<div id="wrap" class="sub">
+<div id="wrap" class="sub search_list">
 <div id="header"><header>
   <div class="logo"><a href="/front/"><img src="/static/img_front/images/common/logo.png" alt="디지털 제품안전 라이브러리"></a></div>
   <nav><ul><li><a class="gnb_1dep" href="/front/legal/">법규정보</a><div class="gnb_2dep"><ul><li><a href="/front/legal/">법규정보DB</a></li><li><a href="/front/legal/?tab=revise">법규 제·개정 정보</a></li></ul></div></li>
@@ -33,96 +40,161 @@
       <div id="title"><span>통합 검색결과</span></div>
       <p class="bread"><span>Home</span><span>통합검색</span><span>${fn:escapeXml(qWord)}</span></p>
     </div>
-    <form id="frmSearch" method="get" action="/front/search/">
+
+    <form name="frmSearch" id="frmSearch" method="get" action="/front/search/">
       <div class="search_table"><table border="0" cellspacing="0" cellpadding="0">
+        <caption>조건검색</caption>
         <colgroup><col width="149"><col width="*"></colgroup>
         <tbody>
           <tr>
-            <th>검색어</th>
+            <th>키워드</th>
             <td>
-              <input type="text" name="qWord" id="qWord" value="${fn:escapeXml(qWord)}" style="width:400px">
+              <input type="text" name="qWord" id="qSearchWord" value="${fn:escapeXml(qWord)}" style="width:400px">
               <button type="submit" class="btn btn_style_01">검색</button>
+              <button type="reset" class="btn btn_style_02">초기화</button>
             </td>
           </tr>
         </tbody>
       </table></div>
     </form>
 
-    <div class="search_list_wrap legal" style="margin-top:30px">
-      <div class="title-wrap" style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1565c0;padding-bottom:10px;margin-bottom:15px">
-        <h2 style="font-size:18px;color:#1565c0">법규정보 (<span class="div_cnt">${cntLegal}</span>건)</h2>
-        <a href="/front/legal/?qWord=${fn:escapeXml(qWord)}" style="font-size:13px;color:#666">더보기 →</a>
+    <!-- ============ 법규정보 ============ -->
+    <div class="search_list_wrap legal">
+      <div class="title-wrap">
+        <h2>법규정보 (<span class="div_cnt">${cntLegal}</span>건)</h2>
+        <c:if test="${cntLegal > 5}"><a href="/front/legal/?qWord=${fn:escapeXml(qWord)}">더보기</a></c:if>
       </div>
-      <c:choose>
-        <c:when test="${empty legalResult}">
-          <p style="color:#999;padding:10px 0">해당 검색어로 법규정보를 찾을 수 없습니다.</p>
-        </c:when>
-        <c:otherwise>
-          <ul class="list legal_list" style="list-style:none;padding:0">
+      <ul class="list legal_list">
+        <c:choose>
+          <c:when test="${empty legalResult}">
+            <li><div style="text-align:center;">검색된 내용이 없습니다</div></li>
+          </c:when>
+          <c:otherwise>
             <c:forEach var="row" items="${legalResult}">
-              <li style="border-bottom:1px solid #eee;padding:12px 0">
-                <a href="/front/legal/view?lr_idx=${row.lr_idx}" style="display:flex;gap:16px;text-decoration:none;color:inherit">
-                  <div style="flex:1">
-                    <div style="color:#888;font-size:12px;margin-bottom:4px">${fn:escapeXml(row.ll_title != null ? row.ll_title : '')}</div>
-                    <div style="font-weight:bold;margin-bottom:4px">${fn:escapeXml(row.lr_title)}</div>
-                    <div style="font-size:12px;color:#999">${row.lr_reg_date}</div>
+              <li>
+                <a href="/front/legal/view?lr_idx=${row.lr_idx}" class="item">
+                  <div class="data-wrap">
+                    <div class="category"><span class="legal">규제법률</span>${fn:escapeXml(row.ll_title)}</div>
+                    <div class="subject"><c:if test="${not empty row.li_legal_name}">${fn:escapeXml(row.li_legal_name)} <i class="bar"></i> </c:if><strong>${fn:escapeXml(row.ld_item_name)}</strong></div>
+                    <ul class="info_list">
+                      <li><em>고시(부속서)</em><i class="bar"></i>${fn:escapeXml(row.ln_title)}</li>
+                      <li><em>관리제도</em><i class="bar"></i>${fn:escapeXml(row.lr_title)}</li>
+                      <li><em>게시일</em><i class="bar"></i>${row.ld_reg_date}</li>
+                    </ul>
                   </div>
                 </a>
               </li>
             </c:forEach>
-          </ul>
-        </c:otherwise>
-      </c:choose>
+          </c:otherwise>
+        </c:choose>
+      </ul>
+      <div class="bottom"><c:if test="${cntLegal > 5}"><a href="/front/legal/?qWord=${fn:escapeXml(qWord)}">더보기</a></c:if></div>
     </div>
 
-    <div class="search_list_wrap riskdb" style="margin-top:40px">
-      <div class="title-wrap" style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #e53935;padding-bottom:10px;margin-bottom:15px">
-        <h2 style="font-size:18px;color:#e53935">위해정보 (<span class="div_cnt">${cntRiskdb}</span>건)</h2>
-        <a href="/front/safety/?qWord=${fn:escapeXml(qWord)}" style="font-size:13px;color:#666">더보기 →</a>
+    <!-- ============ 위해정보 ============ -->
+    <div class="search_list_wrap riskdb">
+      <div class="title-wrap">
+        <h2>위해정보 (<span class="div_cnt">${cntRiskdb}</span>건)</h2>
+        <c:if test="${cntRiskdb > 5}"><a href="/front/safety/?qWord=${fn:escapeXml(qWord)}">더보기</a></c:if>
       </div>
-      <c:choose>
-        <c:when test="${empty riskdbResult}">
-          <p style="color:#999;padding:10px 0">해당 검색어로 위해정보를 찾을 수 없습니다.</p>
-        </c:when>
-        <c:otherwise>
-          <ul class="list riskdb_list" style="list-style:none;padding:0">
+      <ul class="list riskdb_list">
+        <c:choose>
+          <c:when test="${empty riskdbResult}">
+            <li><div style="text-align:center;">검색된 내용이 없습니다</div></li>
+          </c:when>
+          <c:otherwise>
             <c:forEach var="row" items="${riskdbResult}">
-              <li style="border-bottom:1px solid #eee;padding:12px 0">
-                <a href="/front/safety/view?rd_idx=${row.rd_idx}" style="text-decoration:none;color:inherit">
-                  <span style="background:#e53935;color:#fff;font-size:11px;padding:2px 6px;border-radius:3px;margin-right:8px">${fn:escapeXml(row.rd_type != null ? row.rd_type : '')}</span>
-                  <strong>${fn:escapeXml(row.rd_title)}</strong>
-                  <span style="font-size:12px;color:#999;margin-left:8px">${row.rd_reg_date}</span>
+              <li>
+                <a href="/front/safety/view?rd_idx=${row.rd_idx}" class="item">
+                  <div class="data-wrap">
+                    <div class="category">
+                      <span class="risk-type">${fn:escapeXml(row.rd_type)}</span>
+                      <span class="small">${fn:escapeXml(row.rd_factor)}</span>
+                    </div>
+                    <div class="subject">${fn:escapeXml(row.rd_title)}</div>
+                    <ul class="info_list">
+                      <li><em>이슈일자</em><i class="bar"></i>${row.rd_reg_date}</li>
+                      <li><em>정보출처</em><i class="bar"></i>${fn:escapeXml(row.rd_source)}</li>
+                      <li><em>링크</em><i class="bar"></i><span class="url">${fn:escapeXml(row.rd_link)}</span></li>
+                    </ul>
+                  </div>
                 </a>
               </li>
             </c:forEach>
-          </ul>
-        </c:otherwise>
-      </c:choose>
+          </c:otherwise>
+        </c:choose>
+      </ul>
+      <div class="bottom"><c:if test="${cntRiskdb > 5}"><a href="/front/safety/?qWord=${fn:escapeXml(qWord)}">더보기</a></c:if></div>
     </div>
 
-    <div class="search_list_wrap standard" style="margin-top:40px">
-      <div class="title-wrap" style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #2e7d32;padding-bottom:10px;margin-bottom:15px">
-        <h2 style="font-size:18px;color:#2e7d32">롯데 스탠다드 (<span class="div_cnt">${cntStandard}</span>건)</h2>
-        <a href="/front/standard/?qWord=${fn:escapeXml(qWord)}" style="font-size:13px;color:#666">더보기 →</a>
+    <!-- ============ 롯데 스탠다드 ============ -->
+    <div class="search_list_wrap standard">
+      <div class="title-wrap">
+        <h2>롯데 스탠다드 (<span class="div_cnt">${cntStandard}</span>건)</h2>
+        <c:if test="${cntStandard > 5}"><a href="/front/standard/?qWord=${fn:escapeXml(qWord)}">더보기</a></c:if>
       </div>
-      <c:choose>
-        <c:when test="${empty standardResult}">
-          <p style="color:#999;padding:10px 0">해당 검색어로 스탠다드를 찾을 수 없습니다.</p>
-        </c:when>
-        <c:otherwise>
-          <ul style="list-style:none;padding:0">
+      <ul class="list standard_list">
+        <c:choose>
+          <c:when test="${empty standardResult}">
+            <li><div style="text-align:center;">검색된 내용이 없습니다</div></li>
+          </c:when>
+          <c:otherwise>
             <c:forEach var="row" items="${standardResult}">
-              <li style="border-bottom:1px solid #eee;padding:12px 0">
-                <a href="/front/standard/view?st_idx=${row.st_idx}" style="text-decoration:none;color:inherit">
-                  <span style="background:#2e7d32;color:#fff;font-size:11px;padding:2px 6px;border-radius:3px;margin-right:8px">${fn:escapeXml(row.st_div != null ? row.st_div : '')}</span>
-                  <strong>${fn:escapeXml(row.st_title)}</strong>
-                  <span style="font-size:12px;color:#999;margin-left:8px">${fn:escapeXml(row.st_code != null ? row.st_code : '')}</span>
+              <li>
+                <a href="/front/standard/view?st_idx=${row.st_idx}" class="item">
+                  <div class="data-wrap">
+                    <div class="category">
+                      <span class="standard-type">${fn:escapeXml(row.st_div)}</span>
+                      <strong class="standard-name">${fn:escapeXml(row.st_title)}</strong>
+                    </div>
+                    <ul class="info_list">
+                      <li><em>기준서번호</em><i class="bar"></i>${fn:escapeXml(row.st_code)}</li>
+                      <li><em>최신개정일</em><i class="bar"></i>${fn:escapeXml(row.st_ver_date)}</li>
+                      <li><em>적용품목군</em><i class="bar"></i>${fn:escapeXml(row.st_items)}</li>
+                    </ul>
+                  </div>
+                  <i class="icon-view">PDF보기</i>
                 </a>
               </li>
             </c:forEach>
-          </ul>
-        </c:otherwise>
-      </c:choose>
+          </c:otherwise>
+        </c:choose>
+      </ul>
+      <div class="bottom"><c:if test="${cntStandard > 5}"><a href="/front/standard/?qWord=${fn:escapeXml(qWord)}">더보기</a></c:if></div>
+    </div>
+
+    <!-- ============ 숏클래스 ============ -->
+    <div class="search_list_wrap shortclass">
+      <div class="title-wrap">
+        <h2>숏클래스 (<span class="div_cnt">${cntShortclass}</span>건)</h2>
+        <c:if test="${cntShortclass > 5}"><a href="/front/support/?qWord=${fn:escapeXml(qWord)}">더보기</a></c:if>
+      </div>
+      <ul class="list shortclass_list">
+        <c:choose>
+          <c:when test="${empty shortclassResult}">
+            <li><div style="text-align:center;">검색된 내용이 없습니다</div></li>
+          </c:when>
+          <c:otherwise>
+            <c:forEach var="row" items="${shortclassResult}">
+              <li>
+                <a href="/front/support/view?sc_idx=${row.sc_idx}" class="item">
+                  <c:if test="${not empty row.sc_thumb_url}"><div class="img-wrap"><img src="${fn:escapeXml(row.sc_thumb_url)}" alt="${fn:escapeXml(row.sc_title)}"></div></c:if>
+                  <div class="data-wrap">
+                    <div class="category"><span class="legal">규제법률</span>${fn:escapeXml(row.ll_title)}</div>
+                    <div class="subject"><strong class="shortclass-title">${fn:escapeXml(row.sc_title)}</strong></div>
+                    <div class="shortclass-contents">${fn:escapeXml(row.sc_desc)}</div>
+                    <ul class="info_list">
+                      <li><em>교육분야</em><i class="bar"></i>${fn:escapeXml(row.sc_type)}</li>
+                      <li><em>게시일</em><i class="bar"></i>${row.sc_reg_date}</li>
+                    </ul>
+                  </div>
+                </a>
+              </li>
+            </c:forEach>
+          </c:otherwise>
+        </c:choose>
+      </ul>
+      <div class="bottom"><c:if test="${cntShortclass > 5}"><a href="/front/support/?qWord=${fn:escapeXml(qWord)}">더보기</a></c:if></div>
     </div>
 
   </div>

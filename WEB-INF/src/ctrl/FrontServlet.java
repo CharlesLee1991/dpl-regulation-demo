@@ -304,29 +304,62 @@ public class FrontServlet extends HttpServlet {
     // ── 통합검색 ──────────────────────────────────────────────────
     private void doSearch(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         String qWord = nvl(req.getParameter("qWord"), nvl(req.getParameter("qSearchWord"),""));
-        String w = qWord.isEmpty() ? "1=1" : "";
-        String safeWord = qWord.replace("'","''");
+        String sw = qWord.replace("'","''");
 
         List<Map<String,Object>> legalResult = new ArrayList<>();
         List<Map<String,Object>> riskdbResult = new ArrayList<>();
         List<Map<String,Object>> standardResult = new ArrayList<>();
-        int cntLegal=0, cntRiskdb=0, cntStandard=0;
+        List<Map<String,Object>> shortclassResult = new ArrayList<>();
+        int cntLegal=0, cntRiskdb=0, cntStandard=0, cntShortclass=0;
 
         if (!qWord.isEmpty()) {
-            legalResult  = sql("SELECT TOP 5 r.LR_IDX,r.LR_TITLE,ISNULL(l.LL_TITLE,'') AS LL_TITLE,CONVERT(NVARCHAR(10),r.REG_DATE,120) AS LR_REG_DATE FROM dpl_regulation r LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX WHERE r.LR_IS_USE='Y' AND (r.LR_TITLE LIKE N'%"+safeWord+"%' OR l.LL_TITLE LIKE N'%"+safeWord+"%') ORDER BY r.LR_IDX DESC");
-            riskdbResult = sql("SELECT TOP 5 RD_IDX,RD_TITLE,RD_TYPE,CONVERT(NVARCHAR(10),RD_REG_DATE,120) AS RD_REG_DATE FROM dpl_riskdb WHERE RD_IS_USE='Y' AND RD_TITLE LIKE N'%"+safeWord+"%' ORDER BY RD_IDX DESC");
-            standardResult=sql("SELECT TOP 5 ST_IDX,ST_DIV,ST_CODE,ST_TITLE FROM dpl_standard WHERE ST_IS_USE='Y' AND (ST_TITLE LIKE N'%"+safeWord+"%' OR ST_ITEMS LIKE N'%"+safeWord+"%') ORDER BY ST_IDX DESC");
-            cntLegal   = countSql("SELECT COUNT(*) FROM dpl_regulation WHERE LR_IS_USE='Y' AND LR_TITLE LIKE N'%"+safeWord+"%'");
-            cntRiskdb  = countSql("SELECT COUNT(*) FROM dpl_riskdb WHERE RD_IS_USE='Y' AND RD_TITLE LIKE N'%"+safeWord+"%'");
-            cntStandard= countSql("SELECT COUNT(*) FROM dpl_standard WHERE ST_IS_USE='Y' AND ST_TITLE LIKE N'%"+safeWord+"%'");
+            // 법규정보 = 품명(dpl_items_detail) 단위 — 원본 통합검색 정합 (doLegalList 조인 재사용)
+            String legalBase = "FROM dpl_items_detail d "
+                + "LEFT JOIN dpl_regulation r ON r.LR_IDX=d.LR_IDX "
+                + "LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=d.LL_IDX "
+                + "LEFT JOIN dpl_items ii ON ii.LI_IDX=d.LI_IDX "
+                + "LEFT JOIN dpl_notify n ON n.LN_IDX=d.LN_IDX "
+                + "WHERE d.LD_IS_USE='Y' AND (d.LD_ITEM_NAME LIKE N'%"+sw+"%' OR ISNULL(ii.LI_LEGAL_NAME,'') LIKE N'%"+sw+"%' OR ISNULL(l.LL_TITLE,'') LIKE N'%"+sw+"%')";
+            legalResult = sql("SELECT TOP 5 d.LD_IDX,d.LR_IDX,d.LD_ITEM_NAME,"
+                + "ISNULL(l.LL_TITLE,'') AS LL_TITLE,ISNULL(r.LR_TITLE,'') AS LR_TITLE,"
+                + "ISNULL(ii.LI_LEGAL_NAME,'') AS LI_LEGAL_NAME,ISNULL(n.LN_TITLE,'') AS LN_TITLE,"
+                + "CONVERT(NVARCHAR(10),d.LD_REG_DATE,120) AS LD_REG_DATE "
+                + legalBase+" ORDER BY d.LD_IDX DESC");
+            cntLegal = countSql("SELECT COUNT(*) "+legalBase);
+
+            // 위해정보 = dpl_riskdb
+            String riskBase = "FROM dpl_riskdb WHERE RD_IS_USE='Y' AND (RD_TITLE LIKE N'%"+sw+"%' OR ISNULL(RD_FACTOR,'') LIKE N'%"+sw+"%')";
+            riskdbResult = sql("SELECT TOP 5 RD_IDX,RD_TITLE,ISNULL(RD_TYPE,'') AS RD_TYPE,ISNULL(RD_FACTOR,'') AS RD_FACTOR,"
+                + "ISNULL(RD_SOURCE,'') AS RD_SOURCE,ISNULL(RD_LINK,'') AS RD_LINK,"
+                + "CONVERT(NVARCHAR(10),RD_REG_DATE,120) AS RD_REG_DATE "
+                + riskBase+" ORDER BY RD_IDX DESC");
+            cntRiskdb = countSql("SELECT COUNT(*) "+riskBase);
+
+            // 롯데 스탠다드 = dpl_standard
+            String stdBase = "FROM dpl_standard WHERE ST_IS_USE='Y' AND (ST_TITLE LIKE N'%"+sw+"%' OR ISNULL(ST_ITEMS,'') LIKE N'%"+sw+"%' OR ISNULL(ST_CODE,'') LIKE N'%"+sw+"%')";
+            standardResult = sql("SELECT TOP 5 ST_IDX,ISNULL(ST_DIV,'') AS ST_DIV,ISNULL(ST_CODE,'') AS ST_CODE,ST_TITLE,"
+                + "ISNULL(ST_ITEMS,'') AS ST_ITEMS,ISNULL(ST_VER_DATE,'') AS ST_VER_DATE "
+                + stdBase+" ORDER BY ST_IDX DESC");
+            cntStandard = countSql("SELECT COUNT(*) "+stdBase);
+
+            // 숏클래스 = dpl_shortclass (+규제법률 LL_TITLE via SC_LL_IDX)
+            String scBase = "FROM dpl_shortclass s LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=s.SC_LL_IDX "
+                + "WHERE s.SC_IS_USE='Y' AND (s.SC_TITLE LIKE N'%"+sw+"%' OR ISNULL(s.SC_DESC,'') LIKE N'%"+sw+"%')";
+            shortclassResult = sql("SELECT TOP 5 s.SC_IDX,s.SC_TITLE,ISNULL(s.SC_DESC,'') AS SC_DESC,ISNULL(s.SC_TYPE,'') AS SC_TYPE,"
+                + "ISNULL(s.SC_THUMB_URL,'') AS SC_THUMB_URL,ISNULL(l.LL_TITLE,'') AS LL_TITLE,"
+                + "CONVERT(NVARCHAR(10),s.SC_REG_DATE,120) AS SC_REG_DATE "
+                + scBase+" ORDER BY s.SC_IDX DESC");
+            cntShortclass = countSql("SELECT COUNT(*) "+scBase);
         }
 
         req.setAttribute("qWord",qWord);
         req.setAttribute("legalResult",legalResult); req.setAttribute("cntLegal",cntLegal);
         req.setAttribute("riskdbResult",riskdbResult); req.setAttribute("cntRiskdb",cntRiskdb);
         req.setAttribute("standardResult",standardResult); req.setAttribute("cntStandard",cntStandard);
+        req.setAttribute("shortclassResult",shortclassResult); req.setAttribute("cntShortclass",cntShortclass);
         req.getRequestDispatcher("/jsp/front/front_search_result.jsp").forward(req, resp);
     }
+
 
     // ── DB 헬퍼 ──────────────────────────────────────────────────
     private List<Map<String,Object>> sql(String query) throws Exception {
