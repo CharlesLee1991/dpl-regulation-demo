@@ -41,6 +41,8 @@ public class FrontServlet extends HttpServlet {
                 doLegalList(req, resp);
             } else if (uri.startsWith("/front/safety/view")) {
                 doRiskdbView(req, resp);
+            } else if (uri.startsWith("/front/safety/") && "news".equals(req.getParameter("tab"))) {
+                doSafetyNews(req, resp);
             } else if (uri.startsWith("/front/safety/")) {
                 doRiskdbList(req, resp);
             } else if (uri.startsWith("/front/standard/view")) {
@@ -170,6 +172,30 @@ public class FrontServlet extends HttpServlet {
         req.setAttribute("qKey",qKey); req.setAttribute("qWord",qWord); req.setAttribute("qSort",qSort);
         req.setAttribute("qCate",qCate); req.setAttribute("qLT",qLT); req.setAttribute("qLL",qLL);
         req.getRequestDispatcher("/jsp/front/front_riskdb_list.jsp").forward(req, resp);
+    }
+
+    // ── 제품안전 뉴스 ──────────────────────────────────────────────
+    private void doSafetyNews(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        int page = toInt(req.getParameter("page"),1); int offset=(page-1)*PS;
+        String qKey  = nvl(req.getParameter("qKey"),"");
+        String qWord = nvl(req.getParameter("qWord"),"");
+        String qC3   = nvl(req.getParameter("qC3"),"0");   // 정보구분
+        String qC4   = nvl(req.getParameter("qC4"),"0");   // 중요도등급
+        String w = "WHERE LS_IS_USE='Y'";
+        if (!qWord.isEmpty()) {
+            String sw = qWord.replace("'","''");
+            if      ("SOURCE".equals(qKey)) w += " AND LS_COLS_02 LIKE N'%"+sw+"%'";
+            else                            w += " AND LS_TITLE LIKE N'%"+sw+"%'";
+        }
+        if (!"0".equals(qC3) && !qC3.isEmpty()) w += " AND LS_COLS_03="+toInt(qC3,0);
+        if (!"0".equals(qC4) && !qC4.isEmpty()) w += " AND LS_COLS_04="+toInt(qC4,0);
+        List<Map<String,Object>> list = sql("SELECT LS_IDX,LS_TITLE,LS_COLS_02,LS_COLS_03,LS_COLS_04,LS_REG_DATE FROM dpl_law_safety "+w+" ORDER BY LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        int total = countSql("SELECT COUNT(*) FROM dpl_law_safety "+w);
+        req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
+        req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
+        req.setAttribute("qKey",qKey); req.setAttribute("qWord",qWord);
+        req.setAttribute("qC3",qC3); req.setAttribute("qC4",qC4);
+        req.getRequestDispatcher("/jsp/front/front_safety_news_list.jsp").forward(req, resp);
     }
 
     // ── 위해정보 상세 ──────────────────────────────────────────────

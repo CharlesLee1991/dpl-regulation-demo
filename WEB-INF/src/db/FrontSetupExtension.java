@@ -10,6 +10,7 @@ public class FrontSetupExtension {
     public static void init(Connection conn) throws Exception {
         createTables(conn);
         seedData(conn);
+        seedNewsAlways(conn);   // 제품안전 뉴스 — early-return 무관 idempotent
     }
 
     private static void createTables(Connection conn) throws Exception {
@@ -55,6 +56,23 @@ public class FrontSetupExtension {
                 SC_VIDEO_URL NVARCHAR(500),
                 SC_IS_USE CHAR(1) DEFAULT 'Y',
                 SC_REG_DATE DATETIME DEFAULT GETDATE()
+            )""");
+        // ── 제품안전 뉴스 (원본 law_safety 컬럼 미러 — 실환경 이식성) ──
+        exec(conn, """
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_law_safety')
+            CREATE TABLE dpl_law_safety (
+                LS_IDX INT IDENTITY(1,1) PRIMARY KEY,
+                LS_TITLE NVARCHAR(300) NOT NULL,
+                LS_CONTENT NVARCHAR(MAX),
+                LS_COLS_01 NVARCHAR(500) DEFAULT '',
+                LS_COLS_02 NVARCHAR(100) DEFAULT '',
+                LS_COLS_03 INT DEFAULT 1,
+                LS_COLS_04 INT DEFAULT 1,
+                LS_COLS_05 NVARCHAR(100) DEFAULT '',
+                LS_COLS_06 NVARCHAR(100) DEFAULT '',
+                LS_HIT INT DEFAULT 0,
+                LS_IS_USE CHAR(1) DEFAULT 'Y',
+                LS_REG_DATE DATETIME DEFAULT GETDATE()
             )""");
         System.out.println("[DPL] 프론트 테이블 생성 완료");
     }
@@ -102,6 +120,22 @@ public class FrontSetupExtension {
             "(N'위해제품 리콜 대응 매뉴얼',N'제품 위해 발생 시 대응 절차, 소비자 통보, 리콜 신고 방법을 단계별로 안내합니다.',N'공통',0,'Y',GETDATE())");
 
         System.out.println("[DPL] 프론트 데이터 삽입 완료 (위해정보 10건, 스탠다드 8건, 숏클래스 8건)");
+    }
+
+    private static void seedNewsAlways(Connection conn) throws Exception {
+        exec(conn, "IF NOT EXISTS (SELECT 1 FROM dpl_law_safety WHERE LS_IDX=1) BEGIN SET IDENTITY_INSERT dpl_law_safety ON; " +
+            "INSERT INTO dpl_law_safety (LS_IDX,LS_TITLE,LS_COLS_01,LS_COLS_02,LS_COLS_03,LS_COLS_04,LS_IS_USE,LS_REG_DATE) VALUES " +
+            "(10,N'형광물질 범벅 수입 화장지…‘국산’ 표기로 소비자 기만까지',N'https://example.com/n10',N'머니투데이',1,1,'Y','2024-01-25'),"  +
+            "(9,N'혼합 배출 투명페트도 식품용기로',N'https://example.com/n9',N'내일신문',1,1,'Y','2024-01-25'),"  +
+            "(8,N'[세이프 톡] 휴코드바이오 ‘화장품법 위반’ 광고정지 철퇴',N'https://example.com/n8',N'세이프타임즈',1,1,'Y','2024-01-24'),"  +
+            "(7,N'‘짝퉁 장신구’서 발암물질…기준치 최대 930배',N'https://example.com/n7',N'MBC',1,1,'Y','2024-01-24'),"  +
+            "(6,N'[보도참고] 녹말 이쑤시개는 식품이 아닙니다',N'https://example.com/n6',N'식품의약품안전처',1,1,'Y','2024-01-24'),"  +
+            "(5,N'어그(UGG) 부츠 판매하는 사기의심 해외쇼핑몰 주의',N'https://example.com/n5',N'한국소비자원',2,2,'Y','2024-01-22'),"  +
+            "(4,N'어린이용품 제조·수입 기업에 환경유해인자 저감 관리 무료로 지원',N'https://example.com/n4',N'환경부',1,1,'Y','2024-01-22'),"  +
+            "(3,N'해외 화장품 등록 없이 구매대행 ‘형사처벌’',N'https://example.com/n3',N'보건뉴스',1,1,'Y','2024-01-19'),"  +
+            "(2,N'에어프라이어 발암물질 위험? 올 스텐 풀페이스 소재 골라야 안전',N'https://example.com/n2',N'전민일보',1,2,'Y','2024-01-18'),"  +
+            "(1,N'[세이프 톡] 의사가 만든 ‘리쥬닉 화장품’ 부당광고 ‘철퇴’',N'https://example.com/n1',N'세이프타임즈',2,1,'Y','2024-01-17'); " +
+            "SET IDENTITY_INSERT dpl_law_safety OFF; END");
     }
 
     private static void exec(Connection conn, String sql) throws Exception {
