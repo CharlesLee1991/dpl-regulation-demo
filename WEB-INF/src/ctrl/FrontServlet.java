@@ -216,14 +216,21 @@ public class FrontServlet extends HttpServlet {
     // ── 숏클래스 목록 ──────────────────────────────────────────────
     private void doShortclassList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         int page = toInt(req.getParameter("page"),1); int offset=(page-1)*PS;
-        String qWord = nvl(req.getParameter("qWord"),"");
+        String qWord  = nvl(req.getParameter("qWord"),"");
+        String qField = nvl(req.getParameter("qField"),"");
+        String qLL    = nvl(req.getParameter("qLL"),"0");
+        String qCate  = nvl(req.getParameter("qCate"),"0");
         String w = "WHERE SC_IS_USE='Y'";
-        if (!qWord.isEmpty()) w += " AND SC_TITLE LIKE N'%"+qWord.replace("'","''")+"%'";
+        if (!qWord.isEmpty())  w += " AND SC_TITLE LIKE N'%"+qWord.replace("'","''")+"%'";
+        if (!qField.isEmpty()) w += " AND SC_TYPE=N'"+qField.replace("'","''")+"'";
+        if (!"0".equals(qLL)   && !qLL.isEmpty())   w += " AND SC_LL_IDX="+toInt(qLL,0);
+        if (!"0".equals(qCate) && !qCate.isEmpty()) w += " AND SC_CATE="+toInt(qCate,0);
         List<Map<String,Object>> list = sql("SELECT SC_IDX,SC_TITLE,SC_DESC,SC_TYPE FROM dpl_shortclass "+w+" ORDER BY SC_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_shortclass "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
-        req.setAttribute("qWord",qWord);
+        req.setAttribute("qWord",qWord); req.setAttribute("qField",qField);
+        req.setAttribute("qLL",qLL); req.setAttribute("qCate",qCate);
         req.setAttribute("featured",sql("SELECT TOP 4 SC_IDX,SC_TITLE,SC_DESC,SC_TYPE FROM dpl_shortclass WHERE SC_IS_USE='Y' ORDER BY SC_IDX DESC"));
         req.getRequestDispatcher("/jsp/front/front_shortclass_list.jsp").forward(req, resp);
     }

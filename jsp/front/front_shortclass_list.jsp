@@ -10,6 +10,11 @@
 <script src="/static/js/jquery-1.8.3.min.js"></script>
 <script src="/static/js/swiper-bundle.min.js"></script>
 <script src="/static/js/front_common.js"></script>
+<style>
+.btn_tab_group{display:inline-flex;gap:6px}
+.btn_tab{min-width:80px;padding:7px 16px;border:1px solid #2f74c0;background:#fff;color:#2f74c0;border-radius:4px;cursor:pointer;font-size:14px}
+.btn_tab.on{background:#2f74c0;color:#fff;font-weight:bold}
+</style>
 </head><body>
 <div id="wrap" class="sub">
 <div id="header"><header>
@@ -61,15 +66,59 @@
       </div>
     </c:if>
     <form id="frmSearch" method="get" action="/front/support/">
+      <input type="hidden" name="qField" id="qField" value="${fn:escapeXml(qField)}">
       <div class="search_table"><table border="0" cellspacing="0" cellpadding="0">
-        <colgroup><col width="149"><col width="*"></colgroup>
+        <colgroup><col width="149"><col width="*"><col width="100"><col width="*"></colgroup>
         <tbody>
           <tr>
             <th>키워드</th>
-            <td>
+            <td colspan="3">
               <input type="text" name="qWord" value="${fn:escapeXml(qWord)}">
               <button type="submit" class="btn btn_style_01">검색</button>
-              <button type="button" class="btn btn_style_02" onclick="$('#frmSearch input').val('');$('#frmSearch').submit()">초기화</button>
+              <button type="button" class="btn btn_style_02" onclick="$('#qField').val('');$('#qWord').val('');$('#qLL').val('0');$('#qCate').val('0');$('#frmSearch').submit()">초기화</button>
+            </td>
+          </tr>
+          <tr>
+            <th>교육분야</th>
+            <td colspan="3">
+              <div class="btn_tab_group">
+                <button type="button" class="btn_tab ${empty qField?'on':''}" onclick="$('#qField').val('');$('#frmSearch').submit()">전체</button>
+                <button type="button" class="btn_tab ${qField=='법규'?'on':''}" onclick="$('#qField').val('법규');$('#frmSearch').submit()">법규</button>
+                <button type="button" class="btn_tab ${qField=='시스템'?'on':''}" onclick="$('#qField').val('시스템');$('#frmSearch').submit()">시스템</button>
+                <button type="button" class="btn_tab ${qField=='공통'?'on':''}" onclick="$('#qField').val('공통');$('#frmSearch').submit()">공통</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>법령</th>
+            <td colspan="3">
+              <select name="qLL" id="qLL">
+                <option value="0" <c:if test="${empty qLL || qLL=='0'}">selected</c:if>>전체</option>
+                <option value="1" <c:if test="${qLL=='1'}">selected</c:if>>대외무역법</option>
+                <option value="2" <c:if test="${qLL=='2'}">selected</c:if>>생활화학제품 및 살생물제의 안전관리에 관한 법률</option>
+                <option value="3" <c:if test="${qLL=='3'}">selected</c:if>>식품위생법</option>
+                <option value="4" <c:if test="${qLL=='4'}">selected</c:if>>약사법</option>
+                <option value="5" <c:if test="${qLL=='5'}">selected</c:if>>어린이제품안전특별법</option>
+                <option value="6" <c:if test="${qLL=='6'}">selected</c:if>>위생용품관리법</option>
+                <option value="7" <c:if test="${qLL=='7'}">selected</c:if>>전기용품 및 생활용품안전관리법</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <th>카테고리</th>
+            <td colspan="3">
+              <select name="qCate" id="qCate">
+                <option value="0" <c:if test="${empty qCate || qCate=='0'}">selected</c:if>>전체</option>
+                <option value="1" <c:if test="${qCate=='1'}">selected</c:if>>패션잡화</option>
+                <option value="2" <c:if test="${qCate=='2'}">selected</c:if>>취미·스포츠</option>
+                <option value="3" <c:if test="${qCate=='3'}">selected</c:if>>주방용품</option>
+                <option value="4" <c:if test="${qCate=='4'}">selected</c:if>>청소·욕실</option>
+                <option value="5" <c:if test="${qCate=='5'}">selected</c:if>>출산·유아동</option>
+                <option value="6" <c:if test="${qCate=='6'}">selected</c:if>>뷰티·퍼스널케어</option>
+                <option value="7" <c:if test="${qCate=='7'}">selected</c:if>>문구·OA</option>
+              </select>
+              <select name="qCate2" id="qCate2"><option value="0">카테고리 선택</option></select>
+              <select name="qCate3" id="qCate3"><option value="0">카테고리 선택</option></select>
             </td>
           </tr>
         </tbody>
@@ -103,20 +152,20 @@
     </ul>
     <div class="paginate_ui">
     <c:if test="${page>1}">
-      <a class="first" href="?page=1&qWord=${{fn:escapeXml(qWord)}}">처음</a>
-      <a class="prev" href="?page=${page-1}&qWord=${{fn:escapeXml(qWord)}}">이전</a>
+      <a class="first" href="?page=1&qWord=${fn:escapeXml(qWord)}&qField=${fn:escapeXml(qField)}&qLL=${fn:escapeXml(qLL)}&qCate=${fn:escapeXml(qCate)}">처음</a>
+      <a class="prev" href="?page=${page-1}&qWord=${fn:escapeXml(qWord)}&qField=${fn:escapeXml(qField)}&qLL=${fn:escapeXml(qLL)}&qCate=${fn:escapeXml(qCate)}">이전</a>
     </c:if>
     <c:forEach begin="1" end="${pageCnt}" var="p">
       <c:if test="${p>=page-4 && p<=page+4}">
         <c:choose>
           <c:when test="${p==page}"><strong>${p}</strong></c:when>
-          <c:otherwise><a href="?page=${p}&qWord=${{fn:escapeXml(qWord)}}">${p}</a></c:otherwise>
+          <c:otherwise><a href="?page=${p}&qWord=${fn:escapeXml(qWord)}&qField=${fn:escapeXml(qField)}&qLL=${fn:escapeXml(qLL)}&qCate=${fn:escapeXml(qCate)}">${p}</a></c:otherwise>
         </c:choose>
       </c:if>
     </c:forEach>
     <c:if test="${page<pageCnt}">
-      <a class="next" href="?page=${page+1}&qWord=${{fn:escapeXml(qWord)}}">다음</a>
-      <a class="last" href="?page=${pageCnt}&qWord=${{fn:escapeXml(qWord)}}">마지막</a>
+      <a class="next" href="?page=${page+1}&qWord=${fn:escapeXml(qWord)}&qField=${fn:escapeXml(qField)}&qLL=${fn:escapeXml(qLL)}&qCate=${fn:escapeXml(qCate)}">다음</a>
+      <a class="last" href="?page=${pageCnt}&qWord=${fn:escapeXml(qWord)}&qField=${fn:escapeXml(qField)}&qLL=${fn:escapeXml(qLL)}&qCate=${fn:escapeXml(qCate)}">마지막</a>
     </c:if>
   </div>
   </div>
