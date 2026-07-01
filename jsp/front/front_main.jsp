@@ -191,6 +191,36 @@
   </div>
 </section>
 
+<section class="shortclass_area">
+  <div class="inner">
+    <h2 class="main_title">숏클래스<a class="btn_more" href="/front/support/" style="float:right;font-size:14px;color:#888">more &gt;</a></h2>
+    <div class="box_wrap">
+      <div class="box shortclass_content">
+        <div class="swiper shortSlide">
+          <ul class="swiper-wrapper">
+            <c:forEach var="sc" items="${mainShort}">
+              <li class="swiper-slide" style="margin-right:20px">
+                <a href="/front/support/view?sc_idx=${sc.sc_idx}">
+                  <div class="video" style="background:#1a237e;height:130px;display:flex;align-items:center;justify-content:center;border-radius:6px">
+                    <span style="color:#fff;font-size:30px">&#9654;</span>
+                  </div>
+                  <div class="text" style="padding:10px 0">
+                    <em class="tit" style="font-weight:bold;display:block;margin-bottom:6px">${fn:escapeXml(sc.sc_title)}</em>
+                    <p class="txt" style="color:#777;font-size:12px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${fn:escapeXml(sc.sc_desc)}</p>
+                  </div>
+                </a>
+              </li>
+            </c:forEach>
+            <c:if test="${empty mainShort}">
+              <li class="swiper-slide"><a href="/front/support/"><div class="video" style="background:#1a237e;height:130px;border-radius:6px"></div><div class="text" style="padding:10px 0"><em class="tit">숏클래스를 확인하세요</em></div></a></li>
+            </c:if>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <script>
 $(function(){
   // 조회현황 숫자는 서버에서 콤마포맷 정적 렌더 (롤링 플러그인 미안착 버그로 제거)
@@ -198,6 +228,7 @@ $(function(){
   if(typeof Swiper!=='undefined'){
     new Swiper('.paradeSlide',{slidesPerView:6,spaceBetween:30,loop:false,
       navigation:{nextEl:'.swiper-button-next',prevEl:'.swiper-button-prev'}});
+    new Swiper('.shortSlide',{slidesPerView:4,spaceBetween:20,loop:false});
   }
 });
 </script>
