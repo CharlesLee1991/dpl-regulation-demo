@@ -221,6 +221,56 @@
   </div>
 </section>
 
+<section class="reference_area">
+  <div class="inner">
+    <h2 class="main_title">자료실<a class="btn_more" href="/front/support/?tab=info" style="float:right;font-size:14px;color:#888">more &gt;</a></h2>
+    <div class="box_wrap" style="display:flex;gap:30px">
+      <div class="box video_content" style="flex:1">
+        <div class="swiper videoSlide">
+          <ul class="swiper-wrapper">
+            <c:forEach var="v" items="${refVideo}">
+              <li class="swiper-slide" style="margin-right:24px">
+                <div class="slidebox">
+                  <a href="/front/support/?tab=video">
+                    <div class="video" style="background:#000;height:150px;display:flex;align-items:center;justify-content:center;border-radius:6px">
+                      <span style="color:#fff;font-size:30px">&#9654;</span>
+                    </div>
+                    <div class="text" style="padding:10px 0">
+                      <em class="tit" style="font-weight:bold;display:block;margin-bottom:6px">${fn:escapeXml(v.bd_title)}</em>
+                      <p class="txt" style="color:#777;font-size:12px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${fn:escapeXml(v.bd_contents)}</p>
+                    </div>
+                  </a>
+                </div>
+              </li>
+            </c:forEach>
+            <c:if test="${empty refVideo}">
+              <li class="swiper-slide"><div class="slidebox"><a href="/front/support/?tab=video"><div class="video" style="background:#000;height:150px;border-radius:6px"></div><div class="text" style="padding:10px 0"><em class="tit">동영상 자료를 확인하세요</em></div></a></div></li>
+            </c:if>
+          </ul>
+        </div>
+      </div>
+      <div class="box text_content" style="flex:1">
+        <div class="swiper textSlide">
+          <ul class="swiper-wrapper">
+            <c:forEach var="t" items="${refInfo}">
+              <li class="swiper-slide" style="margin-right:24px">
+                <div class="textbox" style="border:1px solid #eee;border-radius:6px;padding:20px;height:170px;box-sizing:border-box">
+                  <em class="tit" style="font-weight:bold;display:block;margin-bottom:10px">${fn:escapeXml(t.bd_title)}</em>
+                  <p class="txt" style="color:#777;font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;margin-bottom:10px">${fn:escapeXml(t.bd_contents)}</p>
+                  <a href="/front/support/?tab=info" class="btn_more" style="font-size:12px;color:#1565c0">더보기 &gt;</a>
+                </div>
+              </li>
+            </c:forEach>
+            <c:if test="${empty refInfo}">
+              <li class="swiper-slide"><div class="textbox" style="border:1px solid #eee;border-radius:6px;padding:20px;height:170px"><em class="tit">유용한 정보를 확인하세요</em></div></li>
+            </c:if>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <script>
 $(function(){
   // 조회현황 숫자는 서버에서 콤마포맷 정적 렌더 (롤링 플러그인 미안착 버그로 제거)
@@ -229,6 +279,8 @@ $(function(){
     new Swiper('.paradeSlide',{slidesPerView:6,spaceBetween:30,loop:false,
       navigation:{nextEl:'.swiper-button-next',prevEl:'.swiper-button-prev'}});
     new Swiper('.shortSlide',{slidesPerView:4,spaceBetween:20,loop:false});
+    new Swiper('.videoSlide',{slidesPerView:2,spaceBetween:24,loop:false});
+    new Swiper('.textSlide',{slidesPerView:2,spaceBetween:24,loop:false});
   }
 });
 </script>

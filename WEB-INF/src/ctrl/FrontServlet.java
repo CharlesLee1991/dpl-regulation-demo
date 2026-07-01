@@ -70,6 +70,8 @@ public class FrontServlet extends HttpServlet {
         req.setAttribute("cntStandard", count("dpl_standard"));
         req.setAttribute("safetyNews",  sql("SELECT TOP 5 LS_IDX,LS_TITLE,ISNULL(LS_COLS_02,'') AS LS_COLS_02,ISNULL(LS_COLS_04,1) AS LS_COLS_04 FROM dpl_law_safety WHERE LS_IS_USE='Y' ORDER BY LS_IDX DESC"));
         req.setAttribute("mainShort",   sql("SELECT TOP 8 SC_IDX,SC_TITLE,ISNULL(SC_DESC,'') AS SC_DESC FROM dpl_shortclass WHERE SC_IS_USE='Y' ORDER BY SC_IDX DESC"));
+        req.setAttribute("refVideo",    sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_IS_USE='Y' AND BD_CODE=8 ORDER BY BD_IDX DESC"));
+        req.setAttribute("refInfo",     sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_IS_USE='Y' AND BD_CODE=6 ORDER BY BD_IDX DESC"));
         req.setAttribute("legalNews",   sql("SELECT TOP 5 r.LR_IDX,r.LR_TITLE,ISNULL(l.LL_TITLE,'') AS LL_TITLE,CONVERT(NVARCHAR(10),r.REG_DATE,120) AS LR_REG_DATE FROM dpl_regulation r LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX WHERE r.LR_IS_USE='Y' ORDER BY r.REG_DATE DESC"));
         req.getRequestDispatcher("/jsp/front/front_main.jsp").forward(req, resp);
     }
