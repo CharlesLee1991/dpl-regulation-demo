@@ -165,17 +165,26 @@
         </ul>
       </div>
       <div class="box security_content">
-        <div class="text_title">법규정보 바로가기<a class="btn_more" href="/front/legal/">more</a></div>
+        <div class="text_title">제품안전 뉴스<a class="btn_more" href="/front/safety/?tab=news">more</a></div>
         <ul>
-          <c:forEach var="item" items="${recentLegal}">
+          <c:forEach var="item" items="${safetyNews}">
             <li>
-              <a href="/front/legal/view?lr_idx=${item.lr_idx}">
-                <span class="level level1">법규</span>
-                <p>${fn:escapeXml(item.lr_title)}</p>
+              <a href="/front/safety/?tab=news">
+                <c:choose>
+                  <c:when test="${item.ls_cols_04==1}"><span class="level level1">관심</span></c:when>
+                  <c:when test="${item.ls_cols_04==2}"><span class="level level2">주의</span></c:when>
+                  <c:when test="${item.ls_cols_04==3}"><span class="level level3">경계</span></c:when>
+                  <c:when test="${item.ls_cols_04==4}"><span class="level level4">심각</span></c:when>
+                  <c:otherwise><span class="level level1">관심</span></c:otherwise>
+                </c:choose>
+                <p>${fn:escapeXml(item.ls_title)}</p>
               </a>
-              <span class="txt_source">${fn:escapeXml(item.ll_title != null ? item.ll_title : '')}</span>
+              <span class="txt_source">${fn:escapeXml(item.ls_cols_02)}</span>
             </li>
           </c:forEach>
+          <c:if test="${empty safetyNews}">
+            <li><a href="/front/safety/?tab=news"><span class="level level1">뉴스</span><p>제품안전 뉴스를 확인하세요</p></a></li>
+          </c:if>
         </ul>
       </div>
     </div>

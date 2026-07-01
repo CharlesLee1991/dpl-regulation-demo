@@ -66,7 +66,7 @@ public class FrontServlet extends HttpServlet {
         req.setAttribute("cntLegal",    count("dpl_regulation"));
         req.setAttribute("cntSafety",   count("dpl_riskdb"));
         req.setAttribute("cntStandard", count("dpl_standard"));
-        req.setAttribute("recentLegal", sql("SELECT TOP 5 r.LR_IDX,r.LR_TITLE,ISNULL(l.LL_TITLE,'') AS LL_TITLE,CONVERT(NVARCHAR(10),r.REG_DATE,120) AS LR_REG_DATE FROM dpl_regulation r LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX WHERE r.LR_IS_USE='Y' ORDER BY r.LR_IDX DESC"));
+        req.setAttribute("safetyNews",  sql("SELECT TOP 5 LS_IDX,LS_TITLE,ISNULL(LS_COLS_02,'') AS LS_COLS_02,ISNULL(LS_COLS_04,1) AS LS_COLS_04 FROM dpl_law_safety WHERE LS_IS_USE='Y' ORDER BY LS_IDX DESC"));
         req.setAttribute("legalNews",   sql("SELECT TOP 5 r.LR_IDX,r.LR_TITLE,ISNULL(l.LL_TITLE,'') AS LL_TITLE,CONVERT(NVARCHAR(10),r.REG_DATE,120) AS LR_REG_DATE FROM dpl_regulation r LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX WHERE r.LR_IS_USE='Y' ORDER BY r.REG_DATE DESC"));
         req.getRequestDispatcher("/jsp/front/front_main.jsp").forward(req, resp);
     }
