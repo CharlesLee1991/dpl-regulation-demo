@@ -8,8 +8,11 @@
 <script src="/static/js/jquery-1.8.3.min.js"></script>
 <script src="/static/js/front_common.js"></script>
 <style>
-.label{display:inline-block;min-width:44px;padding:3px 8px;font-size:12px;line-height:1.3;text-align:center;border-radius:12px;color:#fff}
-.lv1{background:#2f74c0}.lv2{background:#3aa856}.lv3{background:#e0902f}.lv4{background:#c0563f}
+.table_list_style_01 td .label{display:inline-block;min-width:44px;width:auto;height:22px;padding:0 10px;font-size:13px;line-height:22px;text-align:center;border-radius:5px;color:#fff}
+.table_list_style_01 td .label.lv1{background:#007edf}
+.table_list_style_01 td .label.lv2{background:#ffba00}
+.table_list_style_01 td .label.lv3{background:#ff7200}
+.table_list_style_01 td .label.lv4{background:#db0000}
 </style>
 </head>
 <body>

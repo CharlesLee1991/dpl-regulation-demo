@@ -189,7 +189,7 @@ public class FrontServlet extends HttpServlet {
         }
         if (!"0".equals(qC3) && !qC3.isEmpty()) w += " AND LS_COLS_03="+toInt(qC3,0);
         if (!"0".equals(qC4) && !qC4.isEmpty()) w += " AND LS_COLS_04="+toInt(qC4,0);
-        List<Map<String,Object>> list = sql("SELECT LS_IDX,LS_TITLE,LS_COLS_02,LS_COLS_03,LS_COLS_04,LS_REG_DATE FROM dpl_law_safety "+w+" ORDER BY LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        List<Map<String,Object>> list = sql("SELECT LS_IDX,LS_TITLE,LS_COLS_02,LS_COLS_03,LS_COLS_04,REPLACE(CONVERT(NVARCHAR(10),LS_REG_DATE,23),'-','.') AS LS_REG_DATE FROM dpl_law_safety "+w+" ORDER BY LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_law_safety "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
