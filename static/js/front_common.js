@@ -95,17 +95,6 @@ $(function(){
 	});
 	*/
 
-	//counter_ui
-
-		$('.counter_ui').each(function(){
-			$(this).find(".counter").rollingCounter({
-				animate : true,
-				attrCount : 'data-count',
-				delayTime : 20 ,
-				waitTime : 1 ,
-				easing : 'easeOutQuint',
-				rollingCount : 50,
-				duration : 1000
-			});
-		})
+	//counter_ui — 숫자는 서버에서 콤마포맷 정적 렌더 (rollingCounter 플러그인 제거)
+	// (rollingCounter 호출 제거: 플러그인 미로드로 TypeError 발생하여 이후 JS 중단됨)
 })
