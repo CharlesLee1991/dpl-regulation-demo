@@ -11,6 +11,7 @@ public class FrontSetupExtension {
         createTables(conn);
         seedData(conn);
         seedNewsAlways(conn);   // 제품안전 뉴스 — early-return 무관 idempotent
+        seedBoardAlways(conn);  // 셀프러닝 게시판 — early-return 무관 idempotent
     }
 
     private static void createTables(Connection conn) throws Exception {
@@ -74,6 +75,23 @@ public class FrontSetupExtension {
                 LS_IS_USE CHAR(1) DEFAULT 'Y',
                 LS_REG_DATE DATETIME DEFAULT GETDATE()
             )""");
+        // ── 셀프러닝 게시판 (원본 law_board 컬럼 미러 — 유용한정보6/동영상8/안전센터10) ──
+        exec(conn, """
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_law_board')
+            CREATE TABLE dpl_law_board (
+                BD_IDX INT IDENTITY(1,1) PRIMARY KEY,
+                BD_CODE INT NOT NULL,
+                BD_TITLE NVARCHAR(300) NOT NULL,
+                BD_SUBTITLE NVARCHAR(300) DEFAULT '',
+                BD_CONTENTS NVARCHAR(MAX),
+                BD_ETC_COLS_1 NVARCHAR(100) DEFAULT '',
+                BD_ETC_COLS_2 NVARCHAR(100) DEFAULT '',
+                BD_ETC_COLS_3 NVARCHAR(100) DEFAULT '',
+                BD_WRITER NVARCHAR(50) DEFAULT '관리자',
+                BD_HIT INT DEFAULT 0,
+                BD_IS_USE CHAR(1) DEFAULT 'Y',
+                BD_REG_DATE DATETIME DEFAULT GETDATE()
+            )""");
         System.out.println("[DPL] 프론트 테이블 생성 완료");
     }
 
@@ -136,6 +154,26 @@ public class FrontSetupExtension {
             "(2,N'에어프라이어 발암물질 위험? 올 스텐 풀페이스 소재 골라야 안전',N'https://example.com/n2',N'전민일보',1,2,'Y','2024-01-18'),"  +
             "(1,N'[세이프 톡] 의사가 만든 ‘리쥬닉 화장품’ 부당광고 ‘철퇴’',N'https://example.com/n1',N'세이프타임즈',2,1,'Y','2024-01-17'); " +
             "SET IDENTITY_INSERT dpl_law_safety OFF; END");
+    }
+
+    private static void seedBoardAlways(Connection conn) throws Exception {
+        exec(conn, "IF NOT EXISTS (SELECT 1 FROM dpl_law_board WHERE BD_IDX=1) BEGIN SET IDENTITY_INSERT dpl_law_board ON; " +
+            "INSERT INTO dpl_law_board (BD_IDX,BD_CODE,BD_TITLE,BD_ETC_COLS_1,BD_ETC_COLS_2,BD_WRITER,BD_IS_USE,BD_REG_DATE) VALUES " +
+            // 유용한정보 (BD_CODE=6)
+            "(1,6,N'생활화학제품 안전 사용 가이드',N'안전정보',N'생활화학제품',N'관리자','Y','2024-01-20'),"  +
+            "(2,6,N'어린이제품 구매 시 확인사항',N'구매가이드',N'출산·유아동',N'관리자','Y','2024-01-18'),"  +
+            "(3,6,N'전기용품 KC인증 마크 확인법',N'인증정보',N'디지털·가전',N'관리자','Y','2024-01-15'),"  +
+            "(4,6,N'화장품 성분 표시 읽는 법',N'안전정보',N'뷰티·퍼스널케어',N'관리자','Y','2024-01-12'),"  +
+            // 동영상자료 (BD_CODE=8)
+            "(5,8,N'[영상] 제품안전 리콜 대응 절차',N'교육영상',N'공통',N'관리자','Y','2024-01-22'),"  +
+            "(6,8,N'[영상] 원산지 표시 완전 정복',N'교육영상',N'패션잡화',N'관리자','Y','2024-01-19'),"  +
+            "(7,8,N'[영상] 화학제품 안전 표시 이해',N'교육영상',N'청소·욕실',N'관리자','Y','2024-01-16'),"  +
+            "(8,8,N'[영상] 식품용기 안전기준 안내',N'교육영상',N'주방용품',N'관리자','Y','2024-01-13'),"  +
+            // 안전센터 정보 (BD_CODE=10)
+            "(9,10,N'안전센터 시험·검사 서비스 안내',N'센터안내',N'공통',N'관리자','Y','2024-01-21'),"  +
+            "(10,10,N'제품 안전성 평가 의뢰 절차',N'센터안내',N'공통',N'관리자','Y','2024-01-17'),"  +
+            "(11,10,N'유해물질 분석 지원 프로그램',N'지원사업',N'공통',N'관리자','Y','2024-01-14'); " +
+            "SET IDENTITY_INSERT dpl_law_board OFF; END");
     }
 
     private static void exec(Connection conn, String sql) throws Exception {

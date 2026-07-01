@@ -51,6 +51,8 @@ public class FrontServlet extends HttpServlet {
                 doStandardList(req, resp);
             } else if (uri.startsWith("/front/support/view")) {
                 doShortclassView(req, resp);
+            } else if (uri.startsWith("/front/support/") && ("info".equals(req.getParameter("tab")) || "video".equals(req.getParameter("tab")) || "safety".equals(req.getParameter("tab")))) {
+                doSupportBoard(req, resp);
             } else if (uri.startsWith("/front/support/")) {
                 doShortclassList(req, resp);
             } else if (uri.startsWith("/front/search/")) {
@@ -238,6 +240,33 @@ public class FrontServlet extends HttpServlet {
         List<Map<String,Object>> rows = idx>0?sql("SELECT ST_IDX,ST_DIV,ST_CODE,ST_TITLE,ST_ITEMS,ST_VER_DATE,ST_CONTENT,CONVERT(NVARCHAR(10),ST_REG_DATE,120) AS ST_REG_DATE FROM dpl_standard WHERE ST_IDX="+idx):new ArrayList<>();
         req.setAttribute("info",rows.isEmpty()?new LinkedHashMap<>():rows.get(0));
         req.getRequestDispatcher("/jsp/front/front_standard_view.jsp").forward(req, resp);
+    }
+
+    // ── 셀프러닝 게시판 (유용한정보/동영상/안전센터) ──────────────
+    private void doSupportBoard(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        String tab = nvl(req.getParameter("tab"),"info");
+        int bdCode; String tabTitle;
+        if      ("video".equals(tab))  { bdCode=8;  tabTitle="동영상 정보"; }
+        else if ("safety".equals(tab)) { bdCode=10; tabTitle="안전센터 정보"; }
+        else                           { bdCode=6;  tabTitle="유용한 정보"; }
+        int page = toInt(req.getParameter("page"),1); int offset=(page-1)*PS;
+        String qKey  = nvl(req.getParameter("qKey"),"");
+        String qWord = nvl(req.getParameter("qWord"),"");
+        String w = "WHERE BD_IS_USE='Y' AND BD_CODE="+bdCode;
+        if (!qWord.isEmpty()) {
+            String sw = qWord.replace("'","''");
+            if      ("CONT".equals(qKey))  w += " AND BD_CONTENTS LIKE N'%"+sw+"%'";
+            else if ("COL1".equals(qKey))  w += " AND BD_ETC_COLS_1 LIKE N'%"+sw+"%'";
+            else if ("COL2".equals(qKey))  w += " AND BD_ETC_COLS_2 LIKE N'%"+sw+"%'";
+            else                           w += " AND BD_TITLE LIKE N'%"+sw+"%'";
+        }
+        List<Map<String,Object>> list = sql("SELECT BD_IDX,BD_TITLE,BD_ETC_COLS_1,BD_ETC_COLS_2,BD_WRITER,REPLACE(CONVERT(NVARCHAR(10),BD_REG_DATE,23),'-','.') AS BD_REG_DATE FROM dpl_law_board "+w+" ORDER BY BD_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        int total = countSql("SELECT COUNT(*) FROM dpl_law_board "+w);
+        req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
+        req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
+        req.setAttribute("qKey",qKey); req.setAttribute("qWord",qWord);
+        req.setAttribute("tab",tab); req.setAttribute("tabTitle",tabTitle);
+        req.getRequestDispatcher("/jsp/front/front_support_board_list.jsp").forward(req, resp);
     }
 
     // ── 숏클래스 목록 ──────────────────────────────────────────────
