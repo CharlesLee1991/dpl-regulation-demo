@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html><html lang="ko">
 <head>
 <meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -11,7 +12,6 @@
 <script src="/static/js/jquery-1.8.3.min.js"></script>
 <script src="/static/js/swiper-bundle.min.js"></script>
 <script src="/static/js/jquery.easing.min.js"></script>
-<script src="/static/js/jquery.rollingCounter.min.js"></script>
 <script src="/static/js/front_common.js"></script>
 </head>
 <body>
@@ -50,15 +50,15 @@
     <ul>
       <a href="/front/legal/"><li class="counter_ui">
         <em>법규정보</em>
-        <strong class="counter" data-count="${cntLegal}">${cntLegal}</strong> 개
+        <strong class="counter"><fmt:formatNumber value="${cntLegal}" type="number"/></strong> 개
       </li></a>
       <a href="/front/safety/"><li class="counter_ui">
         <em>위해정보</em>
-        <strong class="counter" data-count="${cntSafety}">${cntSafety}</strong> 개
+        <strong class="counter"><fmt:formatNumber value="${cntSafety}" type="number"/></strong> 개
       </li></a>
       <a href="/front/standard/"><li class="counter_ui">
         <em>롯데 스탠다드</em>
-        <strong class="counter" data-count="${cntStandard}">${cntStandard}</strong> 개
+        <strong class="counter"><fmt:formatNumber value="${cntStandard}" type="number"/></strong> 개
       </li></a>
     </ul>
   </div>
@@ -184,20 +184,7 @@
 
 <script>
 $(function(){
-  // 카운터 롤링 — rollingCounter 플러그인 방식 (개발서버 동일)
-  if($.fn.rollingCounter){
-    $('.counter_ui .counter').rollingCounter({
-      duration: 1500,
-      startValue: 0
-    });
-  } else {
-    // 폴백: 직접 애니메이션
-    $('.counter_ui .counter').each(function(){
-      var $t=$(this), val=parseInt($t.data('count'))||0;
-      $({c:0}).animate({c:val},{duration:1500,
-        step:function(n){$t.text(Math.floor(n).toLocaleString());}});
-    });
-  }
+  // 조회현황 숫자는 서버에서 콤마포맷 정적 렌더 (롤링 플러그인 미안착 버그로 제거)
   // 테마 swiper
   if(typeof Swiper!=='undefined'){
     new Swiper('.paradeSlide',{slidesPerView:6,spaceBetween:30,loop:false,
