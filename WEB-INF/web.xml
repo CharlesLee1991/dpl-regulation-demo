@@ -52,6 +52,9 @@
     <url-pattern>/ajax/</url-pattern><url-pattern>/ajax</url-pattern></servlet-mapping>
 
   <!-- ── 프론트엔드 사용자 화면 ── -->
+  <servlet><servlet-name>BoardServlet</servlet-name><servlet-class>ctrl.BoardServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>BoardServlet</servlet-name>
+    <url-pattern>/board/</url-pattern><url-pattern>/board</url-pattern></servlet-mapping>
   <servlet><servlet-name>FrontServlet</servlet-name><servlet-class>ctrl.FrontServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>FrontServlet</servlet-name>
     <url-pattern>/front/*</url-pattern></servlet-mapping>
