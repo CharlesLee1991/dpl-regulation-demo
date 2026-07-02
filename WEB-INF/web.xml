@@ -67,6 +67,9 @@
   <servlet><servlet-name>StandardAdminServlet</servlet-name><servlet-class>ctrl.StandardAdminServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>StandardAdminServlet</servlet-name>
     <url-pattern>/standard_admin/</url-pattern><url-pattern>/standard_admin</url-pattern></servlet-mapping>
+  <servlet><servlet-name>CateAdminServlet</servlet-name><servlet-class>ctrl.CateAdminServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>CateAdminServlet</servlet-name>
+    <url-pattern>/cate_admin/</url-pattern><url-pattern>/cate_admin</url-pattern></servlet-mapping>
   <servlet><servlet-name>FrontServlet</servlet-name><servlet-class>ctrl.FrontServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>FrontServlet</servlet-name>
     <url-pattern>/front/*</url-pattern></servlet-mapping>

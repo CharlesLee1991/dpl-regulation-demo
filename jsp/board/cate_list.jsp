@@ -4,7 +4,7 @@
 <% String uri = request.getRequestURI(); %>
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>숏클래스 — DPL 법규정보 관리시스템</title>
+<title>${cateTitle} — DPL 법규정보 관리시스템</title>
 <link rel="stylesheet" href="/static/css/admin_common.css">
 <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
 <script src="/static/js/jquery-1.11.1.min.js"></script>
@@ -12,10 +12,10 @@
 <script src="/static/js/utils.js"></script>
 <script src="/static/js/admin_common.js"></script>
 <script>
-function jfCreate(idx){location.href="?mode=form&sc_idx="+idx+"&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}";}
-function jfSearch(){$("#frmSearch").attr("action","?mode=list");return true;}
-function jfSearchReset(){$("#frmSearch input[type=text],#frmSearch select").val("");$("#frmSearch").attr("action","?mode=list").submit();}
-$(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("sort");var c=$("#qSort").val();var d=(c===("A|"+s))?"D":"A";$("#qSort").val(d+"|"+s);$("#frmSearch").attr("action","?mode=list").submit();});});
+function jfCreate(idx){location.href="?mode=form&depth=${depth}&lc_idx="+idx+"&qWord=${fn:escapeXml(qWord)}&page=${page}";}
+function jfSearch(){$("#frmSearch").attr("action","?mode=list&depth=${depth}");return true;}
+function jfSearchReset(){$("#frmSearch input[type=text],#frmSearch select").val("");$("#frmSearch").attr("action","?mode=list&depth=${depth}").submit();}
+$(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("sort");var c=$("#qSort").val();var d=(c===("A|"+s))?"D":"A";$("#qSort").val(d+"|"+s);$("#frmSearch").attr("action","?mode=list&depth=${depth}").submit();});});
 </script>
 </head><body>
 <div id="header">
@@ -46,15 +46,15 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     </ul></div>
     <strong class="menu_1depth_03 menu_1depth"><a href="#">셀프러닝 관리</a></strong>
     <div class="menu_2depth_03 menu_2depth"><ul>
-      <li><p class="<%= uri.contains("/shortclass/") ? "on":"" %>"><a href="/shortclass/?mode=list">숏클래스</a></p></li>
+      <li><p><a href="/shortclass/?mode=list">숏클래스</a></p></li>
       <li><p><a href="/board/?mode=list&code=6">유용한 정보</a></p></li>
       <li><p><a href="/board/?mode=list&code=8">동영상 정보</a></p></li>
       <li><p><a href="/board/?mode=list&code=10">안전센터정보</a></p></li>
     </ul></div>
     <strong class="menu_1depth_04 menu_1depth"><a href="#">카테고리 관리</a></strong>
     <div class="menu_2depth_04 menu_2depth"><ul>
-      <li><p><a href="/cate_admin/?mode=list&depth=1">중분류 관리</a></p></li>
-      <li><p><a href="/cate_admin/?mode=list&depth=2">소분류 관리</a></p></li>
+      <li><p class="<%= uri.contains("/cate_admin/") && !"2".equals(request.getParameter("depth")) ? "on":"" %>"><a href="/cate_admin/?mode=list&depth=1">중분류 관리</a></p></li>
+      <li><p class="<%= "2".equals(request.getParameter("depth")) ? "on":"" %>"><a href="/cate_admin/?mode=list&depth=2">소분류 관리</a></p></li>
     </ul></div>
     <strong class="menu_1depth_05 menu_1depth"><a href="#">배너 관리</a></strong>
     <div class="menu_2depth_05 menu_2depth"><ul>
@@ -65,22 +65,25 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
 <div id="container">
 <div id="contents">
   <div class="title title_navi">
-    <h2>숏클래스</h2>
-    <p class="navi"><span>셀프러닝 관리</span><span>숏클래스</span></p>
+    <h2>${cateTitle}</h2>
+    <p class="navi"><span>카테고리 관리</span><span>${cateTitle}</span></p>
   </div>
   <form id="frmSearch" name="frmSearch" method="get" action="?mode=list">
     <input type="hidden" name="mode" value="list">
-    <input type="hidden" name="qSort" id="qSort" value="">
+    <input type="hidden" name="depth" value="${depth}">
     <div class="search_box">
       <table><colgroup><col width="120"><col width="*"></colgroup><tbody>
         <tr><th>검색어</th>
           <td>
-            <select name="qKey" id="qKey">
-              <option value="">전체</option>
-              <option value="TITLE" ${qKey=='TITLE'?'selected':''}>제목</option>
-              <option value="CONT" ${qKey=='CONT'?'selected':''}>내용</option>
-            </select>
-            <input type="text" name="qWord" id="qWord" value="${fn:escapeXml(qWord)}" class="inp">
+            <c:if test="${depth==2}">
+              <select name="qParent">
+                <option value="0">상위 전체</option>
+                <c:forEach var="pp" items="${parentList}">
+                  <option value="${pp.lc_idx}" ${qParent==pp.lc_idx?'selected':''}>${fn:escapeXml(pp.lc_category)}</option>
+                </c:forEach>
+              </select>
+            </c:if>
+            <input type="text" name="qWord" id="qWord" value="${fn:escapeXml(qWord)}" class="inp" placeholder="카테고리명">
             <button type="submit" class="btn btn_style_01">검색</button>
             <button type="button" class="btn btn_style_02" onclick="jfSearchReset();">초기화</button>
           </td></tr>
@@ -92,20 +95,19 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     <p class="btn_r"><button type="button" class="btn btn_style_01" onclick="jfCreate(0);">등록</button></p>
   </div>
   <div class="table_list">
-    <table><colgroup><col width="70"><col width="*"><col width="110"><col width="180"><col width="110"><col width="70"></colgroup>
-      <thead><tr><th>No.</th><th>제목</th><th>교육분야</th><th>규제법률</th><th>등록일</th><th>노출</th></tr></thead>
+    <table><colgroup><col width="70"><c:if test="${depth==2}"><col width="180"></c:if><col width="*"><col width="120"><col width="80"></colgroup>
+      <thead><tr><th>No.</th><c:if test="${depth==2}"><th>상위(중분류)</th></c:if><th>카테고리명</th><th>등록일</th><th>노출</th></tr></thead>
       <tbody>
         <c:choose>
-          <c:when test="${empty list}"><tr><td colspan="6">등록된 내용이 없습니다.</td></tr></c:when>
+          <c:when test="${empty list}"><tr><td colspan="5">등록된 내용이 없습니다.</td></tr></c:when>
           <c:otherwise>
             <c:forEach var="row" items="${list}" varStatus="st">
               <tr>
                 <td>${total - (page-1)*10 - st.index}</td>
-                <td class="td_left"><a href="?mode=form&sc_idx=${row.sc_idx}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}">${fn:escapeXml(row.sc_title)}</a></td>
-                <td>${fn:escapeXml(row.sc_type)}</td>
-                <td>${fn:escapeXml(row.ll_title)}</td>
-                <td>${row.sc_reg_date}</td>
-                <td>${row.sc_is_use}</td>
+                <c:if test="${depth==2}"><td>${fn:escapeXml(row.parent_name)}</td></c:if>
+                <td class="td_left"><a href="?mode=form&depth=${depth}&lc_idx=${row.lc_idx}&qWord=${fn:escapeXml(qWord)}&page=${page}">${fn:escapeXml(row.lc_category)}</a></td>
+                <td>${row.lc_reg_date}</td>
+                <td>${row.lc_is_use}</td>
               </tr>
             </c:forEach>
           </c:otherwise>
@@ -117,7 +119,7 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     <c:forEach var="p" begin="1" end="${pageCnt}">
       <c:choose>
         <c:when test="${p==page}"><strong>${p}</strong></c:when>
-        <c:otherwise><a href="?mode=list&page=${p}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}">${p}</a></c:otherwise>
+        <c:otherwise><a href="?mode=list&depth=${depth}&page=${p}&qWord=${fn:escapeXml(qWord)}">${p}</a></c:otherwise>
       </c:choose>
     </c:forEach>
   </div>

@@ -11,6 +11,26 @@ public class FrontSetupExtension {
         createTables(conn);
         seedData(conn);
         seedNewsAlways(conn);   // 제품안전 뉴스 — early-return 무관 idempotent
+        // ── 카테고리 (원본 law_category 컬럼 미러 — 중분류 depth1 / 소분류 depth2) ──
+        exec(conn, """
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_law_category')
+            CREATE TABLE dpl_law_category (
+                LC_IDX INT IDENTITY(1,1) PRIMARY KEY,
+                LC_CATEGORY NVARCHAR(50) NOT NULL,
+                LC_PARENT_IDX INT DEFAULT 0,
+                LC_ROOT_IDX INT DEFAULT 0,
+                LC_DEPTH INT DEFAULT 1,
+                LC_IS_USE CHAR(1) DEFAULT 'Y',
+                LC_REG_DATE DATETIME DEFAULT GETDATE()
+            )""");
+        exec(conn, """
+            IF NOT EXISTS (SELECT 1 FROM dpl_law_category)
+            BEGIN
+                INSERT INTO dpl_law_category (LC_CATEGORY,LC_PARENT_IDX,LC_ROOT_IDX,LC_DEPTH) VALUES
+                (N'완구/아동용품',0,0,1),(N'생활용품',0,0,1),(N'전기용품',0,0,1);
+                INSERT INTO dpl_law_category (LC_CATEGORY,LC_PARENT_IDX,LC_ROOT_IDX,LC_DEPTH) VALUES
+                (N'봉제완구',1,1,2),(N'플라스틱완구',1,1,2),(N'주방용품',2,2,2),(N'조명기기',3,3,2);
+            END""");
         seedBoardAlways(conn);  // 셀프러닝 게시판 — early-return 무관 idempotent
     }
 

@@ -58,8 +58,8 @@ function jfList(){location.href="?mode=list&code=${code}&page=${page}&qKey=${fn:
     </ul></div>
     <strong class="menu_1depth_04 menu_1depth"><a href="#">카테고리 관리</a></strong>
     <div class="menu_2depth_04 menu_2depth"><ul>
-      <li><p><a href="#">중분류 관리</a></p></li>
-      <li><p><a href="#">소분류 관리</a></p></li>
+      <li><p><a href="/cate_admin/?mode=list&depth=1">중분류 관리</a></p></li>
+      <li><p><a href="/cate_admin/?mode=list&depth=2">소분류 관리</a></p></li>
     </ul></div>
     <strong class="menu_1depth_05 menu_1depth"><a href="#">배너 관리</a></strong>
     <div class="menu_2depth_05 menu_2depth"><ul>
