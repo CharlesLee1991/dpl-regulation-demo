@@ -61,6 +61,9 @@
   <servlet><servlet-name>NewsAdminServlet</servlet-name><servlet-class>ctrl.NewsAdminServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>NewsAdminServlet</servlet-name>
     <url-pattern>/news_admin/</url-pattern><url-pattern>/news_admin</url-pattern></servlet-mapping>
+  <servlet><servlet-name>RiskdbAdminServlet</servlet-name><servlet-class>ctrl.RiskdbAdminServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>RiskdbAdminServlet</servlet-name>
+    <url-pattern>/riskdb_admin/</url-pattern><url-pattern>/riskdb_admin</url-pattern></servlet-mapping>
   <servlet><servlet-name>FrontServlet</servlet-name><servlet-class>ctrl.FrontServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>FrontServlet</servlet-name>
     <url-pattern>/front/*</url-pattern></servlet-mapping>

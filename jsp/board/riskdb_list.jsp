@@ -4,7 +4,7 @@
 <% String uri = request.getRequestURI(); %>
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>제품안전 뉴스 — DPL 법규정보 관리시스템</title>
+<title>위해정보DB — DPL 법규정보 관리시스템</title>
 <link rel="stylesheet" href="/static/css/admin_common.css">
 <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
 <script src="/static/js/jquery-1.11.1.min.js"></script>
@@ -12,12 +12,10 @@
 <script src="/static/js/utils.js"></script>
 <script src="/static/js/admin_common.js"></script>
 <script>
-function jfSave(act){
-  if($("#ls_title").val()==""){alert("제목을 입력하세요.");$("#ls_title").focus();return;}
-  $("#action").val(act);$("#frmInfo").submit();
-}
-function jfDelete(){ if(!confirm("삭제하시겠습니까?"))return; $("#action").val("DEL");$("#frmInfo").submit(); }
-function jfList(){location.href="?mode=list&page=${page}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}";}
+function jfCreate(idx){location.href="?mode=form&rd_idx="+idx+"&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}";}
+function jfSearch(){$("#frmSearch").attr("action","?mode=list");return true;}
+function jfSearchReset(){$("#frmSearch input[type=text],#frmSearch select").val("");$("#frmSearch").attr("action","?mode=list").submit();}
+$(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("sort");var c=$("#qSort").val();var d=(c===("A|"+s))?"D":"A";$("#qSort").val(d+"|"+s);$("#frmSearch").attr("action","?mode=list").submit();});});
 </script>
 </head><body>
 <div id="header">
@@ -42,8 +40,8 @@ function jfList(){location.href="?mode=list&page=${page}&qKey=${fn:escapeXml(qKe
     </ul></div>
     <strong class="menu_1depth_02 menu_1depth"><a href="#">안전정보DB 관리</a></strong>
     <div class="menu_2depth_02 menu_2depth"><ul>
-      <li><p class="<%= uri.contains("/news_admin/") ? "on":"" %>"><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
-      <li><p><a href="/riskdb_admin/?mode=list">위해정보DB</a></p></li>
+      <li><p><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
+      <li><p class="<%= uri.contains("/riskdb_admin/") ? "on":"" %>"><a href="/riskdb_admin/?mode=list">위해정보DB</a></p></li>
       <li><p><a href="#">롯데스탠다드(품질기준서)</a></p></li>
     </ul></div>
     <strong class="menu_1depth_03 menu_1depth"><a href="#">셀프러닝 관리</a></strong>
@@ -67,58 +65,63 @@ function jfList(){location.href="?mode=list&page=${page}&qKey=${fn:escapeXml(qKe
 <div id="container">
 <div id="contents">
   <div class="title title_navi">
-    <h2>제품안전 뉴스 <c:choose><c:when test="${lsIdx>0}">수정</c:when><c:otherwise>등록</c:otherwise></c:choose></h2>
-    <p class="navi"><span>안전정보DB 관리</span><span>제품안전 뉴스</span></p>
+    <h2>위해정보DB</h2>
+    <p class="navi"><span>안전정보DB 관리</span><span>위해정보DB</span></p>
   </div>
-  <form id="frmInfo" name="frmInfo" method="post" action="?mode=proc">
-    <input type="hidden" name="mode" value="proc">
-    <input type="hidden" name="action" id="action" value="">
-    <input type="hidden" name="ls_idx" value="${lsIdx}">
-    <input type="hidden" name="page" value="${page}">
-    <input type="hidden" name="qKey" value="${fn:escapeXml(qKey)}">
-    <input type="hidden" name="qWord" value="${fn:escapeXml(qWord)}">
-    <div class="table_form">
-      <table><colgroup><col width="150"><col width="*"></colgroup><tbody>
-        <tr><th>정보구분</th>
-          <td><select name="ls_cols_03">
-            <option value="1" ${empty info || info.ls_cols_03==1 ? 'selected':''}>일반안전정보</option>
-            <option value="2" ${info.ls_cols_03==2 ? 'selected':''}>상품위해정보</option>
-          </select></td></tr>
-        <tr><th>중요도등급</th>
-          <td><select name="ls_cols_04">
-            <option value="1" ${empty info || info.ls_cols_04==1 ? 'selected':''}>관심</option>
-            <option value="2" ${info.ls_cols_04==2 ? 'selected':''}>주의</option>
-            <option value="3" ${info.ls_cols_04==3 ? 'selected':''}>경계</option>
-            <option value="4" ${info.ls_cols_04==4 ? 'selected':''}>심각</option>
-          </select></td></tr>
-        <tr><th>제목 <span class="req">*</span></th>
-          <td><input type="text" name="ls_title" id="ls_title" class="inp _w_full" value="${fn:escapeXml(info.ls_title)}" maxlength="100"></td></tr>
-        <tr><th>출처</th>
-          <td><input type="text" name="ls_cols_02" class="inp" value="${fn:escapeXml(info.ls_cols_02)}" maxlength="100"></td></tr>
-        <tr><th>원문 링크</th>
-          <td><input type="text" name="ls_cols_01" class="inp _w_full" value="${fn:escapeXml(info.ls_cols_01)}" maxlength="500"></td></tr>
-        <tr><th>내용</th>
-          <td><textarea name="ls_content" rows="12" class="inp _w_full">${fn:escapeXml(info.ls_content)}</textarea></td></tr>
-        <tr><th>노출</th>
+  <form id="frmSearch" name="frmSearch" method="get" action="?mode=list">
+    <input type="hidden" name="mode" value="list">
+    <input type="hidden" name="qSort" id="qSort" value="">
+    <div class="search_box">
+      <table><colgroup><col width="120"><col width="*"></colgroup><tbody>
+        <tr><th>검색어</th>
           <td>
-            <label><input type="radio" name="ls_is_use" value="Y" ${empty info || info.ls_is_use=='Y' ? 'checked':''}> 노출</label>
-            <label><input type="radio" name="ls_is_use" value="N" ${info.ls_is_use=='N' ? 'checked':''}> 미노출</label>
+            <select name="qKey" id="qKey">
+              <option value="">전체</option>
+              <option value="TITLE" ${qKey=='TITLE'?'selected':''}>제목</option>
+              <option value="FACTOR" ${qKey=='FACTOR'?'selected':''}>위해요소</option>
+            </select>
+            <input type="text" name="qWord" id="qWord" value="${fn:escapeXml(qWord)}" class="inp">
+            <button type="submit" class="btn btn_style_01">검색</button>
+            <button type="button" class="btn btn_style_02" onclick="jfSearchReset();">초기화</button>
           </td></tr>
       </tbody></table>
     </div>
-    <div class="btn_wrap">
-      <c:choose>
-        <c:when test="${lsIdx>0}">
-          <button type="button" class="btn btn_style_01" onclick="jfSave('MOD');">수정</button>
-          <button type="button" class="btn btn_style_03" onclick="jfDelete();">삭제</button>
-        </c:when>
-        <c:otherwise>
-          <button type="button" class="btn btn_style_01" onclick="jfSave('ADD');">등록</button>
-        </c:otherwise>
-      </c:choose>
-      <button type="button" class="btn btn_style_02" onclick="jfList();">목록</button>
-    </div>
   </form>
+  <div class="list_info">
+    <p>총 <strong>${total}</strong>건</p>
+    <p class="btn_r"><button type="button" class="btn btn_style_01" onclick="jfCreate(0);">등록</button></p>
+  </div>
+  <div class="table_list">
+    <table><colgroup><col width="70"><col width="*"><col width="110"><col width="140"><col width="80"><col width="110"><col width="70"></colgroup>
+      <thead><tr><th>No.</th><th>제목</th><th>결함구분</th><th>위해요소</th><th>등급</th><th>등록일</th><th>노출</th></tr></thead>
+      <tbody>
+        <c:choose>
+          <c:when test="${empty list}"><tr><td colspan="7">등록된 내용이 없습니다.</td></tr></c:when>
+          <c:otherwise>
+            <c:forEach var="row" items="${list}" varStatus="st">
+              <tr>
+                <td>${total - (page-1)*10 - st.index}</td>
+                <td class="td_left"><a href="?mode=form&rd_idx=${row.rd_idx}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}">${fn:escapeXml(row.rd_title)}</a></td>
+                <td>${fn:escapeXml(row.rd_type)}</td>
+                <td>${fn:escapeXml(row.rd_factor)}</td>
+                <td><c:choose><c:when test="${row.rd_level==2}">주의</c:when><c:when test="${row.rd_level==3}">경계</c:when><c:when test="${row.rd_level==4}">심각</c:when><c:otherwise>관심</c:otherwise></c:choose></td>
+                <td>${row.rd_reg_date}</td>
+                <td>${row.rd_is_use}</td>
+              </tr>
+            </c:forEach>
+          </c:otherwise>
+        </c:choose>
+      </tbody>
+    </table>
+  </div>
+  <div class="paging">
+    <c:forEach var="p" begin="1" end="${pageCnt}">
+      <c:choose>
+        <c:when test="${p==page}"><strong>${p}</strong></c:when>
+        <c:otherwise><a href="?mode=list&page=${p}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}">${p}</a></c:otherwise>
+      </c:choose>
+    </c:forEach>
+  </div>
 </div>
 </div>
 </body></html>
