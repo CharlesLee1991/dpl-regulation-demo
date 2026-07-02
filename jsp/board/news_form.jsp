@@ -4,7 +4,7 @@
 <% String uri = request.getRequestURI(); %>
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>숏클래스 — DPL 법규정보 관리시스템</title>
+<title>제품안전 뉴스 — DPL 법규정보 관리시스템</title>
 <link rel="stylesheet" href="/static/css/admin_common.css">
 <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
 <script src="/static/js/jquery-1.11.1.min.js"></script>
@@ -13,7 +13,7 @@
 <script src="/static/js/admin_common.js"></script>
 <script>
 function jfSave(act){
-  if($("#sc_title").val()==""){alert("제목을 입력하세요.");$("#sc_title").focus();return;}
+  if($("#ls_title").val()==""){alert("제목을 입력하세요.");$("#ls_title").focus();return;}
   $("#action").val(act);$("#frmInfo").submit();
 }
 function jfDelete(){ if(!confirm("삭제하시겠습니까?"))return; $("#action").val("DEL");$("#frmInfo").submit(); }
@@ -42,13 +42,13 @@ function jfList(){location.href="?mode=list&page=${page}&qKey=${fn:escapeXml(qKe
     </ul></div>
     <strong class="menu_1depth_02 menu_1depth"><a href="#">안전정보DB 관리</a></strong>
     <div class="menu_2depth_02 menu_2depth"><ul>
-      <li><p><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
+      <li><p class="<%= uri.contains("/news_admin/") ? "on":"" %>"><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
       <li><p><a href="#">위해정보DB</a></p></li>
       <li><p><a href="#">롯데스탠다드(품질기준서)</a></p></li>
     </ul></div>
     <strong class="menu_1depth_03 menu_1depth"><a href="#">셀프러닝 관리</a></strong>
     <div class="menu_2depth_03 menu_2depth"><ul>
-      <li><p class="<%= uri.contains("/shortclass/") ? "on":"" %>"><a href="/shortclass/?mode=list">숏클래스</a></p></li>
+      <li><p><a href="/shortclass/?mode=list">숏클래스</a></p></li>
       <li><p><a href="/board/?mode=list&code=6">유용한 정보</a></p></li>
       <li><p><a href="/board/?mode=list&code=8">동영상 정보</a></p></li>
       <li><p><a href="/board/?mode=list&code=10">안전센터정보</a></p></li>
@@ -67,49 +67,48 @@ function jfList(){location.href="?mode=list&page=${page}&qKey=${fn:escapeXml(qKe
 <div id="container">
 <div id="contents">
   <div class="title title_navi">
-    <h2>숏클래스 <c:choose><c:when test="${scIdx>0}">수정</c:when><c:otherwise>등록</c:otherwise></c:choose></h2>
-    <p class="navi"><span>셀프러닝 관리</span><span>숏클래스</span></p>
+    <h2>제품안전 뉴스 <c:choose><c:when test="${lsIdx>0}">수정</c:when><c:otherwise>등록</c:otherwise></c:choose></h2>
+    <p class="navi"><span>안전정보DB 관리</span><span>제품안전 뉴스</span></p>
   </div>
   <form id="frmInfo" name="frmInfo" method="post" action="?mode=proc">
     <input type="hidden" name="mode" value="proc">
     <input type="hidden" name="action" id="action" value="">
-    <input type="hidden" name="sc_idx" value="${scIdx}">
+    <input type="hidden" name="ls_idx" value="${lsIdx}">
     <input type="hidden" name="page" value="${page}">
     <input type="hidden" name="qKey" value="${fn:escapeXml(qKey)}">
     <input type="hidden" name="qWord" value="${fn:escapeXml(qWord)}">
     <div class="table_form">
       <table><colgroup><col width="150"><col width="*"></colgroup><tbody>
+        <tr><th>정보구분</th>
+          <td><select name="ls_cols_03">
+            <option value="1" ${empty info || info.ls_cols_03==1 ? 'selected':''}>일반안전정보</option>
+            <option value="2" ${info.ls_cols_03==2 ? 'selected':''}>상품위해정보</option>
+          </select></td></tr>
+        <tr><th>중요도등급</th>
+          <td><select name="ls_cols_04">
+            <option value="1" ${empty info || info.ls_cols_04==1 ? 'selected':''}>관심</option>
+            <option value="2" ${info.ls_cols_04==2 ? 'selected':''}>주의</option>
+            <option value="3" ${info.ls_cols_04==3 ? 'selected':''}>경계</option>
+            <option value="4" ${info.ls_cols_04==4 ? 'selected':''}>심각</option>
+          </select></td></tr>
         <tr><th>제목 <span class="req">*</span></th>
-          <td><input type="text" name="sc_title" id="sc_title" class="inp _w_full" value="${fn:escapeXml(info.sc_title)}" maxlength="100"></td></tr>
-        <tr><th>교육분야</th>
-          <td><select name="sc_type">
-            <option value="법규" ${info.sc_type=='법규'?'selected':''}>법규</option>
-            <option value="품질" ${info.sc_type=='품질'?'selected':''}>품질</option>
-            <option value="공통" ${info.sc_type=='공통'?'selected':''}>공통</option>
-          </select></td></tr>
-        <tr><th>규제법률</th>
-          <td><select name="sc_ll_idx">
-            <option value="0">선택</option>
-            <c:forEach var="l" items="${legalList}">
-              <option value="${l.ll_idx}" ${info.sc_ll_idx==l.ll_idx?'selected':''}>${fn:escapeXml(l.ll_title)}</option>
-            </c:forEach>
-          </select></td></tr>
+          <td><input type="text" name="ls_title" id="ls_title" class="inp _w_full" value="${fn:escapeXml(info.ls_title)}" maxlength="100"></td></tr>
+        <tr><th>출처</th>
+          <td><input type="text" name="ls_cols_02" class="inp" value="${fn:escapeXml(info.ls_cols_02)}" maxlength="100"></td></tr>
+        <tr><th>원문 링크</th>
+          <td><input type="text" name="ls_cols_01" class="inp _w_full" value="${fn:escapeXml(info.ls_cols_01)}" maxlength="500"></td></tr>
         <tr><th>내용</th>
-          <td><textarea name="sc_desc" rows="10" class="inp _w_full">${fn:escapeXml(info.sc_desc)}</textarea></td></tr>
-        <tr><th>썸네일 URL</th>
-          <td><input type="text" name="sc_thumb_url" class="inp _w_full" value="${fn:escapeXml(info.sc_thumb_url)}"></td></tr>
-        <tr><th>동영상 URL</th>
-          <td><input type="text" name="sc_video_url" class="inp _w_full" value="${fn:escapeXml(info.sc_video_url)}"></td></tr>
+          <td><textarea name="ls_content" rows="12" class="inp _w_full">${fn:escapeXml(info.ls_content)}</textarea></td></tr>
         <tr><th>노출</th>
           <td>
-            <label><input type="radio" name="sc_is_use" value="Y" ${empty info || info.sc_is_use=='Y' ? 'checked':''}> 노출</label>
-            <label><input type="radio" name="sc_is_use" value="N" ${info.sc_is_use=='N' ? 'checked':''}> 미노출</label>
+            <label><input type="radio" name="ls_is_use" value="Y" ${empty info || info.ls_is_use=='Y' ? 'checked':''}> 노출</label>
+            <label><input type="radio" name="ls_is_use" value="N" ${info.ls_is_use=='N' ? 'checked':''}> 미노출</label>
           </td></tr>
       </tbody></table>
     </div>
     <div class="btn_wrap">
       <c:choose>
-        <c:when test="${scIdx>0}">
+        <c:when test="${lsIdx>0}">
           <button type="button" class="btn btn_style_01" onclick="jfSave('MOD');">수정</button>
           <button type="button" class="btn btn_style_03" onclick="jfDelete();">삭제</button>
         </c:when>

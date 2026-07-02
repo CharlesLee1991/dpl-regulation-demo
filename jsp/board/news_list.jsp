@@ -4,7 +4,7 @@
 <% String uri = request.getRequestURI(); %>
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>숏클래스 — DPL 법규정보 관리시스템</title>
+<title>제품안전 뉴스 — DPL 법규정보 관리시스템</title>
 <link rel="stylesheet" href="/static/css/admin_common.css">
 <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
 <script src="/static/js/jquery-1.11.1.min.js"></script>
@@ -12,7 +12,7 @@
 <script src="/static/js/utils.js"></script>
 <script src="/static/js/admin_common.js"></script>
 <script>
-function jfCreate(idx){location.href="?mode=form&sc_idx="+idx+"&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}";}
+function jfCreate(idx){location.href="?mode=form&ls_idx="+idx+"&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}";}
 function jfSearch(){$("#frmSearch").attr("action","?mode=list");return true;}
 function jfSearchReset(){$("#frmSearch input[type=text],#frmSearch select").val("");$("#frmSearch").attr("action","?mode=list").submit();}
 $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("sort");var c=$("#qSort").val();var d=(c===("A|"+s))?"D":"A";$("#qSort").val(d+"|"+s);$("#frmSearch").attr("action","?mode=list").submit();});});
@@ -40,13 +40,13 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     </ul></div>
     <strong class="menu_1depth_02 menu_1depth"><a href="#">안전정보DB 관리</a></strong>
     <div class="menu_2depth_02 menu_2depth"><ul>
-      <li><p><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
+      <li><p class="<%= uri.contains("/news_admin/") ? "on":"" %>"><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
       <li><p><a href="#">위해정보DB</a></p></li>
       <li><p><a href="#">롯데스탠다드(품질기준서)</a></p></li>
     </ul></div>
     <strong class="menu_1depth_03 menu_1depth"><a href="#">셀프러닝 관리</a></strong>
     <div class="menu_2depth_03 menu_2depth"><ul>
-      <li><p class="<%= uri.contains("/shortclass/") ? "on":"" %>"><a href="/shortclass/?mode=list">숏클래스</a></p></li>
+      <li><p><a href="/shortclass/?mode=list">숏클래스</a></p></li>
       <li><p><a href="/board/?mode=list&code=6">유용한 정보</a></p></li>
       <li><p><a href="/board/?mode=list&code=8">동영상 정보</a></p></li>
       <li><p><a href="/board/?mode=list&code=10">안전센터정보</a></p></li>
@@ -65,8 +65,8 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
 <div id="container">
 <div id="contents">
   <div class="title title_navi">
-    <h2>숏클래스</h2>
-    <p class="navi"><span>셀프러닝 관리</span><span>숏클래스</span></p>
+    <h2>제품안전 뉴스</h2>
+    <p class="navi"><span>안전정보DB 관리</span><span>제품안전 뉴스</span></p>
   </div>
   <form id="frmSearch" name="frmSearch" method="get" action="?mode=list">
     <input type="hidden" name="mode" value="list">
@@ -92,20 +92,26 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     <p class="btn_r"><button type="button" class="btn btn_style_01" onclick="jfCreate(0);">등록</button></p>
   </div>
   <div class="table_list">
-    <table><colgroup><col width="70"><col width="*"><col width="110"><col width="180"><col width="110"><col width="70"></colgroup>
-      <thead><tr><th>No.</th><th>제목</th><th>교육분야</th><th>규제법률</th><th>등록일</th><th>노출</th></tr></thead>
+    <table><colgroup><col width="70"><col width="*"><col width="110"><col width="80"><col width="150"><col width="110"><col width="70"></colgroup>
+      <thead><tr><th>No.</th><th>제목</th><th>정보구분</th><th>중요도</th><th>출처</th><th>등록일</th><th>노출</th></tr></thead>
       <tbody>
         <c:choose>
-          <c:when test="${empty list}"><tr><td colspan="6">등록된 내용이 없습니다.</td></tr></c:when>
+          <c:when test="${empty list}"><tr><td colspan="7">등록된 내용이 없습니다.</td></tr></c:when>
           <c:otherwise>
             <c:forEach var="row" items="${list}" varStatus="st">
               <tr>
                 <td>${total - (page-1)*10 - st.index}</td>
-                <td class="td_left"><a href="?mode=form&sc_idx=${row.sc_idx}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}">${fn:escapeXml(row.sc_title)}</a></td>
-                <td>${fn:escapeXml(row.sc_type)}</td>
-                <td>${fn:escapeXml(row.ll_title)}</td>
-                <td>${row.sc_reg_date}</td>
-                <td>${row.sc_is_use}</td>
+                <td class="td_left"><a href="?mode=form&ls_idx=${row.ls_idx}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}">${fn:escapeXml(row.ls_title)}</a></td>
+                <td><c:choose><c:when test="${row.ls_cols_03==2}">상품위해정보</c:when><c:otherwise>일반안전정보</c:otherwise></c:choose></td>
+                <td><c:choose>
+                  <c:when test="${row.ls_cols_04==2}">주의</c:when>
+                  <c:when test="${row.ls_cols_04==3}">경계</c:when>
+                  <c:when test="${row.ls_cols_04==4}">심각</c:when>
+                  <c:otherwise>관심</c:otherwise>
+                </c:choose></td>
+                <td>${fn:escapeXml(row.ls_cols_02)}</td>
+                <td>${row.ls_reg_date}</td>
+                <td>${row.ls_is_use}</td>
               </tr>
             </c:forEach>
           </c:otherwise>

@@ -40,7 +40,7 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     </ul></div>
     <strong class="menu_1depth_02 menu_1depth"><a href="#">안전정보DB 관리</a></strong>
     <div class="menu_2depth_02 menu_2depth"><ul>
-      <li><p><a href="#">제품안전 뉴스</a></p></li>
+      <li><p><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
       <li><p><a href="#">위해정보DB</a></p></li>
       <li><p><a href="#">롯데스탠다드(품질기준서)</a></p></li>
     </ul></div>

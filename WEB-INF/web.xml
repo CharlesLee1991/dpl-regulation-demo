@@ -58,6 +58,9 @@
   <servlet><servlet-name>ShortclassAdminServlet</servlet-name><servlet-class>ctrl.ShortclassAdminServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>ShortclassAdminServlet</servlet-name>
     <url-pattern>/shortclass/</url-pattern><url-pattern>/shortclass</url-pattern></servlet-mapping>
+  <servlet><servlet-name>NewsAdminServlet</servlet-name><servlet-class>ctrl.NewsAdminServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>NewsAdminServlet</servlet-name>
+    <url-pattern>/news_admin/</url-pattern><url-pattern>/news_admin</url-pattern></servlet-mapping>
   <servlet><servlet-name>FrontServlet</servlet-name><servlet-class>ctrl.FrontServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>FrontServlet</servlet-name>
     <url-pattern>/front/*</url-pattern></servlet-mapping>
