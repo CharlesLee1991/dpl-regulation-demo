@@ -46,7 +46,7 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     </ul></div>
     <strong class="menu_1depth_03 menu_1depth"><a href="#">셀프러닝 관리</a></strong>
     <div class="menu_2depth_03 menu_2depth"><ul>
-      <li><p><a href="#">숏클래스</a></p></li>
+      <li><p><a href="/shortclass/?mode=list">숏클래스</a></p></li>
       <li><p class="<%= uri.contains("/board/") && "6".equals(request.getParameter("code")==null?"6":request.getParameter("code")) ? "on":"" %>"><a href="/board/?mode=list&code=6">유용한 정보</a></p></li>
       <li><p class="<%= "8".equals(request.getParameter("code")) ? "on":"" %>"><a href="/board/?mode=list&code=8">동영상 정보</a></p></li>
       <li><p class="<%= "10".equals(request.getParameter("code")) ? "on":"" %>"><a href="/board/?mode=list&code=10">안전센터정보</a></p></li>

@@ -55,6 +55,9 @@
   <servlet><servlet-name>BoardServlet</servlet-name><servlet-class>ctrl.BoardServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>BoardServlet</servlet-name>
     <url-pattern>/board/</url-pattern><url-pattern>/board</url-pattern></servlet-mapping>
+  <servlet><servlet-name>ShortclassAdminServlet</servlet-name><servlet-class>ctrl.ShortclassAdminServlet</servlet-class></servlet>
+  <servlet-mapping><servlet-name>ShortclassAdminServlet</servlet-name>
+    <url-pattern>/shortclass/</url-pattern><url-pattern>/shortclass</url-pattern></servlet-mapping>
   <servlet><servlet-name>FrontServlet</servlet-name><servlet-class>ctrl.FrontServlet</servlet-class></servlet>
   <servlet-mapping><servlet-name>FrontServlet</servlet-name>
     <url-pattern>/front/*</url-pattern></servlet-mapping>
