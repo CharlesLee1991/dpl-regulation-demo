@@ -42,7 +42,7 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     <div class="menu_2depth_02 menu_2depth"><ul>
       <li><p class="<%= uri.contains("/news_admin/") ? "on":"" %>"><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
       <li><p><a href="/riskdb_admin/?mode=list">위해정보DB</a></p></li>
-      <li><p><a href="#">롯데스탠다드(품질기준서)</a></p></li>
+      <li><p><a href="/standard_admin/?mode=list">롯데스탠다드(품질기준서)</a></p></li>
     </ul></div>
     <strong class="menu_1depth_03 menu_1depth"><a href="#">셀프러닝 관리</a></strong>
     <div class="menu_2depth_03 menu_2depth"><ul>

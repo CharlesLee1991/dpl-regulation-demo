@@ -4,7 +4,7 @@
 <% String uri = request.getRequestURI(); %>
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>제품안전 뉴스 — DPL 법규정보 관리시스템</title>
+<title>롯데스탠다드 — DPL 법규정보 관리시스템</title>
 <link rel="stylesheet" href="/static/css/admin_common.css">
 <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
 <script src="/static/js/jquery-1.11.1.min.js"></script>
@@ -13,7 +13,7 @@
 <script src="/static/js/admin_common.js"></script>
 <script>
 function jfSave(act){
-  if($("#ls_title").val()==""){alert("제목을 입력하세요.");$("#ls_title").focus();return;}
+  if($("#st_title").val()==""){alert("기준서명을 입력하세요.");$("#st_title").focus();return;}
   $("#action").val(act);$("#frmInfo").submit();
 }
 function jfDelete(){ if(!confirm("삭제하시겠습니까?"))return; $("#action").val("DEL");$("#frmInfo").submit(); }
@@ -42,9 +42,9 @@ function jfList(){location.href="?mode=list&page=${page}&qKey=${fn:escapeXml(qKe
     </ul></div>
     <strong class="menu_1depth_02 menu_1depth"><a href="#">안전정보DB 관리</a></strong>
     <div class="menu_2depth_02 menu_2depth"><ul>
-      <li><p class="<%= uri.contains("/news_admin/") ? "on":"" %>"><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
+      <li><p><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
       <li><p><a href="/riskdb_admin/?mode=list">위해정보DB</a></p></li>
-      <li><p><a href="/standard_admin/?mode=list">롯데스탠다드(품질기준서)</a></p></li>
+      <li><p class="<%= uri.contains("/standard_admin/") ? "on":"" %>"><a href="/standard_admin/?mode=list">롯데스탠다드(품질기준서)</a></p></li>
     </ul></div>
     <strong class="menu_1depth_03 menu_1depth"><a href="#">셀프러닝 관리</a></strong>
     <div class="menu_2depth_03 menu_2depth"><ul>
@@ -67,48 +67,44 @@ function jfList(){location.href="?mode=list&page=${page}&qKey=${fn:escapeXml(qKe
 <div id="container">
 <div id="contents">
   <div class="title title_navi">
-    <h2>제품안전 뉴스 <c:choose><c:when test="${lsIdx>0}">수정</c:when><c:otherwise>등록</c:otherwise></c:choose></h2>
-    <p class="navi"><span>안전정보DB 관리</span><span>제품안전 뉴스</span></p>
+    <h2>롯데스탠다드 <c:choose><c:when test="${stIdx>0}">수정</c:when><c:otherwise>등록</c:otherwise></c:choose></h2>
+    <p class="navi"><span>안전정보DB 관리</span><span>롯데스탠다드</span></p>
   </div>
   <form id="frmInfo" name="frmInfo" method="post" action="?mode=proc">
     <input type="hidden" name="mode" value="proc">
     <input type="hidden" name="action" id="action" value="">
-    <input type="hidden" name="ls_idx" value="${lsIdx}">
+    <input type="hidden" name="st_idx" value="${stIdx}">
     <input type="hidden" name="page" value="${page}">
     <input type="hidden" name="qKey" value="${fn:escapeXml(qKey)}">
     <input type="hidden" name="qWord" value="${fn:escapeXml(qWord)}">
     <div class="table_form">
       <table><colgroup><col width="150"><col width="*"></colgroup><tbody>
-        <tr><th>정보구분</th>
-          <td><select name="ls_cols_03">
-            <option value="1" ${empty info || info.ls_cols_03==1 ? 'selected':''}>일반안전정보</option>
-            <option value="2" ${info.ls_cols_03==2 ? 'selected':''}>상품위해정보</option>
+        <tr><th>기준서번호</th>
+          <td><input type="text" name="st_code" class="inp" value="${fn:escapeXml(info.st_code)}" maxlength="20"></td></tr>
+        <tr><th>구분</th>
+          <td><select name="st_div">
+            <option value="공통" ${empty info || info.st_div=='공통' ? 'selected':''}>공통</option>
+            <option value="품질기준" ${info.st_div=='품질기준' ? 'selected':''}>품질기준</option>
+            <option value="인스펙션" ${info.st_div=='인스펙션' ? 'selected':''}>인스펙션</option>
           </select></td></tr>
-        <tr><th>중요도등급</th>
-          <td><select name="ls_cols_04">
-            <option value="1" ${empty info || info.ls_cols_04==1 ? 'selected':''}>관심</option>
-            <option value="2" ${info.ls_cols_04==2 ? 'selected':''}>주의</option>
-            <option value="3" ${info.ls_cols_04==3 ? 'selected':''}>경계</option>
-            <option value="4" ${info.ls_cols_04==4 ? 'selected':''}>심각</option>
-          </select></td></tr>
-        <tr><th>제목 <span class="req">*</span></th>
-          <td><input type="text" name="ls_title" id="ls_title" class="inp _w_full" value="${fn:escapeXml(info.ls_title)}" maxlength="100"></td></tr>
-        <tr><th>출처</th>
-          <td><input type="text" name="ls_cols_02" class="inp" value="${fn:escapeXml(info.ls_cols_02)}" maxlength="100"></td></tr>
-        <tr><th>원문 링크</th>
-          <td><input type="text" name="ls_cols_01" class="inp _w_full" value="${fn:escapeXml(info.ls_cols_01)}" maxlength="500"></td></tr>
+        <tr><th>최신개정일</th>
+          <td><input type="text" name="st_ver_date" class="inp" value="${fn:escapeXml(info.st_ver_date)}" placeholder="YYYY-MM-DD" style="width:120px"></td></tr>
+        <tr><th>기준서명 <span class="req">*</span></th>
+          <td><input type="text" name="st_title" id="st_title" class="inp _w_full" value="${fn:escapeXml(info.st_title)}" maxlength="100"></td></tr>
+        <tr><th>적용품목</th>
+          <td><input type="text" name="st_items" class="inp _w_full" value="${fn:escapeXml(info.st_items)}" maxlength="200"></td></tr>
         <tr><th>내용</th>
-          <td><textarea name="ls_content" rows="12" class="inp _w_full">${fn:escapeXml(info.ls_content)}</textarea></td></tr>
+          <td><textarea name="st_content" rows="10" class="inp _w_full">${fn:escapeXml(info.st_content)}</textarea></td></tr>
         <tr><th>노출</th>
           <td>
-            <label><input type="radio" name="ls_is_use" value="Y" ${empty info || info.ls_is_use=='Y' ? 'checked':''}> 노출</label>
-            <label><input type="radio" name="ls_is_use" value="N" ${info.ls_is_use=='N' ? 'checked':''}> 미노출</label>
+            <label><input type="radio" name="st_is_use" value="Y" ${empty info || info.st_is_use=='Y' ? 'checked':''}> 노출</label>
+            <label><input type="radio" name="st_is_use" value="N" ${info.st_is_use=='N' ? 'checked':''}> 미노출</label>
           </td></tr>
       </tbody></table>
     </div>
     <div class="btn_wrap">
       <c:choose>
-        <c:when test="${lsIdx>0}">
+        <c:when test="${stIdx>0}">
           <button type="button" class="btn btn_style_01" onclick="jfSave('MOD');">수정</button>
           <button type="button" class="btn btn_style_03" onclick="jfDelete();">삭제</button>
         </c:when>

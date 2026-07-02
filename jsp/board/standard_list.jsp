@@ -4,7 +4,7 @@
 <% String uri = request.getRequestURI(); %>
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>위해정보DB — DPL 법규정보 관리시스템</title>
+<title>롯데스탠다드 — DPL 법규정보 관리시스템</title>
 <link rel="stylesheet" href="/static/css/admin_common.css">
 <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
 <script src="/static/js/jquery-1.11.1.min.js"></script>
@@ -12,7 +12,7 @@
 <script src="/static/js/utils.js"></script>
 <script src="/static/js/admin_common.js"></script>
 <script>
-function jfCreate(idx){location.href="?mode=form&rd_idx="+idx+"&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}";}
+function jfCreate(idx){location.href="?mode=form&st_idx="+idx+"&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}";}
 function jfSearch(){$("#frmSearch").attr("action","?mode=list");return true;}
 function jfSearchReset(){$("#frmSearch input[type=text],#frmSearch select").val("");$("#frmSearch").attr("action","?mode=list").submit();}
 $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("sort");var c=$("#qSort").val();var d=(c===("A|"+s))?"D":"A";$("#qSort").val(d+"|"+s);$("#frmSearch").attr("action","?mode=list").submit();});});
@@ -41,8 +41,8 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     <strong class="menu_1depth_02 menu_1depth"><a href="#">안전정보DB 관리</a></strong>
     <div class="menu_2depth_02 menu_2depth"><ul>
       <li><p><a href="/news_admin/?mode=list">제품안전 뉴스</a></p></li>
-      <li><p class="<%= uri.contains("/riskdb_admin/") ? "on":"" %>"><a href="/riskdb_admin/?mode=list">위해정보DB</a></p></li>
-      <li><p><a href="/standard_admin/?mode=list">롯데스탠다드(품질기준서)</a></p></li>
+      <li><p><a href="/riskdb_admin/?mode=list">위해정보DB</a></p></li>
+      <li><p class="<%= uri.contains("/standard_admin/") ? "on":"" %>"><a href="/standard_admin/?mode=list">롯데스탠다드(품질기준서)</a></p></li>
     </ul></div>
     <strong class="menu_1depth_03 menu_1depth"><a href="#">셀프러닝 관리</a></strong>
     <div class="menu_2depth_03 menu_2depth"><ul>
@@ -65,8 +65,8 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
 <div id="container">
 <div id="contents">
   <div class="title title_navi">
-    <h2>위해정보DB</h2>
-    <p class="navi"><span>안전정보DB 관리</span><span>위해정보DB</span></p>
+    <h2>롯데스탠다드(품질기준서)</h2>
+    <p class="navi"><span>안전정보DB 관리</span><span>롯데스탠다드</span></p>
   </div>
   <form id="frmSearch" name="frmSearch" method="get" action="?mode=list">
     <input type="hidden" name="mode" value="list">
@@ -77,8 +77,9 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
           <td>
             <select name="qKey" id="qKey">
               <option value="">전체</option>
-              <option value="TITLE" ${qKey=='TITLE'?'selected':''}>제목</option>
-              <option value="FACTOR" ${qKey=='FACTOR'?'selected':''}>위해요소</option>
+              <option value="CODE" ${qKey=='CODE'?'selected':''}>기준서번호</option>
+              <option value="TITLE" ${qKey=='TITLE'?'selected':''}>기준서명</option>
+              <option value="ITEMS" ${qKey=='ITEMS'?'selected':''}>적용품목</option>
             </select>
             <input type="text" name="qWord" id="qWord" value="${fn:escapeXml(qWord)}" class="inp">
             <button type="submit" class="btn btn_style_01">검색</button>
@@ -92,8 +93,8 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
     <p class="btn_r"><button type="button" class="btn btn_style_01" onclick="jfCreate(0);">등록</button></p>
   </div>
   <div class="table_list">
-    <table><colgroup><col width="70"><col width="*"><col width="110"><col width="140"><col width="80"><col width="110"><col width="70"></colgroup>
-      <thead><tr><th>No.</th><th>제목</th><th>결함구분</th><th>위해요소</th><th>등급</th><th>등록일</th><th>노출</th></tr></thead>
+    <table><colgroup><col width="70"><col width="110"><col width="130"><col width="*"><col width="150"><col width="100"><col width="70"></colgroup>
+      <thead><tr><th>No.</th><th>구분</th><th>기준서번호</th><th>기준서명</th><th>적용품목</th><th>최신개정일</th><th>노출</th></tr></thead>
       <tbody>
         <c:choose>
           <c:when test="${empty list}"><tr><td colspan="7">등록된 내용이 없습니다.</td></tr></c:when>
@@ -101,12 +102,12 @@ $(function(){$("th[data-act='ls-sort']").click(function(){var s=$(this).data("so
             <c:forEach var="row" items="${list}" varStatus="st">
               <tr>
                 <td>${total - (page-1)*10 - st.index}</td>
-                <td class="td_left"><a href="?mode=form&rd_idx=${row.rd_idx}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}">${fn:escapeXml(row.rd_title)}</a></td>
-                <td>${fn:escapeXml(row.rd_type)}</td>
-                <td>${fn:escapeXml(row.rd_factor)}</td>
-                <td><c:choose><c:when test="${row.rd_level==2}">주의</c:when><c:when test="${row.rd_level==3}">경계</c:when><c:when test="${row.rd_level==4}">심각</c:when><c:otherwise>관심</c:otherwise></c:choose></td>
-                <td>${row.rd_reg_date}</td>
-                <td>${row.rd_is_use}</td>
+                <td>${fn:escapeXml(row.st_div)}</td>
+                <td>${fn:escapeXml(row.st_code)}</td>
+                <td class="td_left"><a href="?mode=form&st_idx=${row.st_idx}&qKey=${fn:escapeXml(qKey)}&qWord=${fn:escapeXml(qWord)}&page=${page}">${fn:escapeXml(row.st_title)}</a></td>
+                <td>${fn:escapeXml(row.st_items)}</td>
+                <td>${fn:escapeXml(row.st_ver_date)}</td>
+                <td>${row.st_is_use}</td>
               </tr>
             </c:forEach>
           </c:otherwise>
