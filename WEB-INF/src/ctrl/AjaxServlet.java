@@ -71,11 +71,11 @@ public class AjaxServlet extends HttpServlet {
                         if (p == null || p.isEmpty()) p = getServletContext().getInitParameter("DB_PASS");
                         java.sql.Connection conn = java.sql.DriverManager.getConnection(url, u, p);
                         java.sql.Statement st = conn.createStatement();
-                        java.sql.ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM LawRegulationLegal WHERE LL_IS_USE='Y'");
+                        java.sql.ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM LAW_REGULATION_LEGAL WHERE LL_IS_USE='Y'");
                         int cnt = rs.next() ? rs.getInt(1) : -1;
                         conn.close();
                         long ms = System.currentTimeMillis() - t0;
-                        out.print("{\"status\":\"OK\",\"db\":\"LSAFE\",\"host\":\"121.78.147.103,16868\",\"table\":\"LawRegulationLegal\",\"count\":"+cnt+",\"ms\":"+ms+"}");
+                        out.print("{\"status\":\"OK\",\"db\":\"LSAFE\",\"host\":\"121.78.147.103,16868\",\"table\":\"LAW_REGULATION_LEGAL\",\"count\":"+cnt+",\"ms\":"+ms+"}");
                     } catch(Exception ex) {
                         long ms = System.currentTimeMillis() - t0;
                         out.print("{\"status\":\"FAIL\",\"error\":\""+escape(ex.getMessage())+"\",\"ms\":"+ms+"}");
