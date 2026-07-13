@@ -14,9 +14,12 @@ public class DBPoolListener implements ServletContextListener {
         System.out.println("[DPL] DBPool initialized");
         // 프론트엔드 테이블 초기화
         try (Connection conn = DBPool.getConnection()) {
+            // 순서 보장: 규제 스키마/SP/시드 먼저, 그 다음 프론트 확장
+            new RegulationSetupListener().runSetup(conn);
             FrontSetupExtension.init(conn);
         } catch (Exception e) {
-            System.err.println("[DPL] FrontSetup 실패: " + e.getMessage());
+            System.err.println("[DPL] Setup 실패: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

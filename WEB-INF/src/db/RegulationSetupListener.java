@@ -1,24 +1,20 @@
 package db;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
 import java.sql.*;
 
 /**
  * 앱 기동 시 전체 SP 생성 + 실제 DPL 데이터 초기화
  */
-@WebListener
-public class RegulationSetupListener implements ServletContextListener {
+public class RegulationSetupListener {
 
-    @Override
-    public void contextInitialized(ServletContextEvent sce) {
+    /** DBPoolListener가 DBPool.init() 후 명시적으로 호출 (리스너 자동등록 순서 문제 방지) */
+    public void runSetup(Connection conn) {
         System.out.println("[DPL] SetupListener 시작");
-        try (Connection conn = DBPool.getConnection()) {
+        try {
             createAllTables(conn);
             createAllSPs(conn);
             insertRealDataIfEmpty(conn);
-            seedReviseAlways(conn);   // F3 제·개정 시드 — DB 기존데이터 유무와 무관하게 idempotent 실행
+            seedReviseAlways(conn);
             System.out.println("[DPL] SetupListener 완료");
         } catch (Exception e) {
             System.err.println("[DPL] SetupListener 실패: " + e.getMessage());
@@ -236,5 +232,4 @@ public class RegulationSetupListener implements ServletContextListener {
         exec(conn, "IF OBJECT_ID('" + spName + "','P') IS NOT NULL DROP PROCEDURE " + spName);
         exec(conn, createSql);
     }
-    @Override public void contextDestroyed(ServletContextEvent sce) {}
 }
