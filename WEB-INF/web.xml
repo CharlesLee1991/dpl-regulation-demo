@@ -7,7 +7,7 @@
 
   <display-name>DPL JSP Migration</display-name>
   <context-param><param-name>DB_URL</param-name>
-    <param-value>jdbc:sqlserver://121.78.147.103:16868;databaseName=LSAFE;encrypt=false;trustServerCertificate=true</param-value>
+    <param-value>jdbc:sqlserver://121.78.147.103:16868;databaseName=LSAFE;encrypt=false;trustServerCertificate=true;sslProtocol=TLSv1</param-value>
   </context-param>
   <context-param><param-name>DB_USER</param-name><param-value>lsafe</param-value></context-param>
   <context-param><param-name>DB_PASS</param-name><param-value></param-value></context-param>
