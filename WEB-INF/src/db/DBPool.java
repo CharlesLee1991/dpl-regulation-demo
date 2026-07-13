@@ -36,6 +36,7 @@ public class DBPool {
         cfg.setIdleTimeout(600_000);
         cfg.setMaxLifetime(1_800_000);
         cfg.setPoolName("DPL-Pool");
+        cfg.setInitializationFailTimeout(-1); // 부팅 시 연결 실패해도 컨텍스트 유지, 지연 재시도
 
         ds = new HikariDataSource(cfg);
     }
