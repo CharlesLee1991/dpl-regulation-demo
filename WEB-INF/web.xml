@@ -7,10 +7,10 @@
 
   <display-name>DPL JSP Migration</display-name>
   <context-param><param-name>DB_URL</param-name>
-    <param-value>jdbc:sqlserver://mssql.railway.internal:1433;databaseName=DPL_DEMO;encrypt=false;trustServerCertificate=true</param-value>
+    <param-value>jdbc:sqlserver://121.78.147.103:16868;databaseName=LSAFE;encrypt=false;trustServerCertificate=true</param-value>
   </context-param>
-  <context-param><param-name>DB_USER</param-name><param-value>sa</param-value></context-param>
-  <context-param><param-name>DB_PASS</param-name><param-value>Dpl#aad20616c463470c958e</param-value></context-param>
+  <context-param><param-name>DB_USER</param-name><param-value>lsafe</param-value></context-param>
+  <context-param><param-name>DB_PASS</param-name><param-value></param-value></context-param>
   <context-param><param-name>DB_POOL_SIZE</param-name><param-value>5</param-value></context-param>
 
   <listener><listener-class>db.DBPoolListener</listener-class></listener>

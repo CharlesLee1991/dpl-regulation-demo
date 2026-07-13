@@ -64,8 +64,12 @@ public class AjaxServlet extends HttpServlet {
                     long t0 = System.currentTimeMillis();
                     try {
                         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-                        String url = "jdbc:sqlserver://121.78.147.103,16868;databaseName=LSAFE;encrypt=false;trustServerCertificate=true;loginTimeout=8";
-                        java.sql.Connection conn = java.sql.DriverManager.getConnection(url, "lsafe", "Lotternd12#$");
+                        // 접속정보는 컨텍스트/환경변수에서 조회 (평문 하드코딩 금지)
+                        String url = getServletContext().getInitParameter("DB_URL");
+                        String u = getServletContext().getInitParameter("DB_USER");
+                        String p = System.getenv("DB_PASS");
+                        if (p == null || p.isEmpty()) p = getServletContext().getInitParameter("DB_PASS");
+                        java.sql.Connection conn = java.sql.DriverManager.getConnection(url, u, p);
                         java.sql.Statement st = conn.createStatement();
                         java.sql.ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM LawRegulationLegal WHERE LL_IS_USE='Y'");
                         int cnt = rs.next() ? rs.getInt(1) : -1;
