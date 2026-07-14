@@ -84,6 +84,65 @@ public class AjaxServlet extends HttpServlet {
                 }
 
                 // ── 데이터 초기화 (실제 DPL 데이터로 교체) ──────────
+                case "mirror_reload": {
+                    // 실 LAW_* 원본 → dpl_* 미러 재적재 (LAW_*는 READ only, dpl_*만 write)
+                    // 컬럼 적응형: dpl_x ∩ LAW_X 공통 컬럼만 INSERT ... SELECT (스키마 불일치 방어)
+                    String[][] pairs = {
+                        {"dpl_regulation_legal","LAW_REGULATION_LEGAL"},
+                        {"dpl_regulation","LAW_REGULATION"},
+                        {"dpl_notify","LAW_NOTIFY"},
+                        {"dpl_safety","LAW_SAFETY"},
+                        {"dpl_items","LAW_ITEMS"},
+                        {"dpl_items_detail","LAW_ITEMS_DETAIL"}
+                    };
+                    // 자식→부모 역순 DELETE (FK), 부모→자식 순서 INSERT
+                    String[] delOrder = {"dpl_items_detail","dpl_items","dpl_safety","dpl_notify","dpl_regulation","dpl_regulation_legal"};
+                    StringBuilder rpt = new StringBuilder("{\"status\":\"OK\",\"tables\":{");
+                    try (java.sql.Connection conn = db.DBPool.getConnection()) {
+                        // 1) 미러 비우기 (자식부터)
+                        try (java.sql.Statement st = conn.createStatement()) {
+                            for (String t : delOrder) { try { st.execute("DELETE FROM "+t); } catch(Exception ignored){} }
+                        }
+                        // 2) 부모→자식 순서로 실 LAW_ → dpl_ 적재
+                        boolean first = true;
+                        for (String[] p : pairs) {
+                            String dpl = p[0], law = p[1];
+                            String res;
+                            try (java.sql.Statement st = conn.createStatement()) {
+                                // 공통 컬럼 추출
+                                java.util.List<String> cols = new java.util.ArrayList<>();
+                                try (java.sql.ResultSet rs = st.executeQuery(
+                                        "SELECT c1.COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS c1 "
+                                      + "JOIN INFORMATION_SCHEMA.COLUMNS c2 ON c1.COLUMN_NAME=c2.COLUMN_NAME "
+                                      + "WHERE c1.TABLE_NAME='"+dpl+"' AND c2.TABLE_NAME='"+law+"'")) {
+                                    while (rs.next()) cols.add("["+rs.getString(1)+"]");
+                                }
+                                if (cols.isEmpty()) { res="{\"ok\":false,\"err\":\"no common columns\"}"; }
+                                else {
+                                    String colList = String.join(",", cols);
+                                    boolean hasId = colList.toUpperCase().contains("_IDX]");
+                                    try (java.sql.Statement st2 = conn.createStatement()) {
+                                        if (hasId) { try { st2.execute("SET IDENTITY_INSERT "+dpl+" ON"); } catch(Exception ignored){} }
+                                        int n = st2.executeUpdate("INSERT INTO "+dpl+" ("+colList+") SELECT "+colList+" FROM "+law);
+                                        if (hasId) { try { st2.execute("SET IDENTITY_INSERT "+dpl+" OFF"); } catch(Exception ignored){} }
+                                        res = "{\"ok\":true,\"rows\":"+n+",\"cols\":"+cols.size()+"}";
+                                    }
+                                }
+                            } catch (Exception te) {
+                                res = "{\"ok\":false,\"err\":\""+escape(te.getMessage())+"\"}";
+                            }
+                            if (!first) rpt.append(",");
+                            rpt.append("\"").append(dpl).append("\":").append(res);
+                            first = false;
+                        }
+                        rpt.append("}}");
+                        out.print(rpt.toString());
+                    } catch (Exception ex) {
+                        resp.setStatus(500);
+                        out.print("{\"status\":\"FAIL\",\"error\":\"" + escape(ex.getMessage()) + "\"}");
+                    }
+                    break;
+                }
                 case "data_reset": {
                     try (java.sql.Connection conn = db.DBPool.getConnection()) {
                         try (java.sql.Statement st = conn.createStatement()) {
