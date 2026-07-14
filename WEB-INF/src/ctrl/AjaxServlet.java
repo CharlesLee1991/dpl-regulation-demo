@@ -83,6 +83,74 @@ public class AjaxServlet extends HttpServlet {
                     break;
                 }
 
+                // ── [임시] 실 LAW_* 스키마 탐색 (읽기 전용, 파악 후 제거) ──
+                case "db_schema": {
+                    long t0 = System.currentTimeMillis();
+                    String mode = nvl(req.getParameter("mode"), "tables");
+                    String table = nvl(req.getParameter("table"), "");
+                    try {
+                        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+                        String url = getServletContext().getInitParameter("DB_URL");
+                        String u = getServletContext().getInitParameter("DB_USER");
+                        String p = System.getenv("DB_PASS");
+                        if (p == null || p.isEmpty()) p = getServletContext().getInitParameter("DB_PASS");
+                        java.sql.Connection conn = java.sql.DriverManager.getConnection(url, u, p);
+                        StringBuilder sb = new StringBuilder();
+                        if ("columns".equals(mode)) {
+                            // 화이트리스트: LAW_ 접두 + 대문자/숫자/언더스코어만
+                            if (!table.matches("^LAW_[A-Z0-9_]+$")) {
+                                conn.close();
+                                out.print("{\"status\":\"FAIL\",\"error\":\"table not allowed (must match ^LAW_[A-Z0-9_]+$)\"}");
+                                break;
+                            }
+                            java.sql.PreparedStatement ps = conn.prepareStatement(
+                                "SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, ORDINAL_POSITION " +
+                                "FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME=? ORDER BY ORDINAL_POSITION");
+                            ps.setString(1, table);
+                            java.sql.ResultSet rs = ps.executeQuery();
+                            sb.append("{\"status\":\"OK\",\"mode\":\"columns\",\"table\":\"").append(escape(table)).append("\",\"columns\":[");
+                            boolean first = true;
+                            while (rs.next()) {
+                                if (!first) sb.append(",");
+                                sb.append("{\"name\":\"").append(escape(rs.getString(1)))
+                                  .append("\",\"type\":\"").append(escape(rs.getString(2)))
+                                  .append("\",\"len\":").append(rs.getObject(3)==null?"null":rs.getInt(3))
+                                  .append(",\"nullable\":\"").append(escape(rs.getString(4)))
+                                  .append("\",\"pos\":").append(rs.getInt(5)).append("}");
+                                first = false;
+                            }
+                            sb.append("]}");
+                        } else {
+                            // mode=tables : LAW_* 테이블 목록 + 행수
+                            java.sql.Statement st = conn.createStatement();
+                            java.sql.ResultSet rs = st.executeQuery(
+                                "SELECT t.TABLE_NAME, p.rows FROM INFORMATION_SCHEMA.TABLES t " +
+                                "JOIN sys.tables st ON st.name = t.TABLE_NAME " +
+                                "JOIN sys.partitions p ON p.object_id = st.object_id AND p.index_id IN (0,1) " +
+                                "WHERE t.TABLE_NAME LIKE 'LAW[_]%' AND t.TABLE_TYPE='BASE TABLE' " +
+                                "ORDER BY t.TABLE_NAME");
+                            sb.append("{\"status\":\"OK\",\"mode\":\"tables\",\"tables\":[");
+                            boolean first = true;
+                            while (rs.next()) {
+                                if (!first) sb.append(",");
+                                sb.append("{\"name\":\"").append(escape(rs.getString(1)))
+                                  .append("\",\"rows\":").append(rs.getLong(2)).append("}");
+                                first = false;
+                            }
+                            sb.append("]}");
+                        }
+                        conn.close();
+                        long ms = System.currentTimeMillis() - t0;
+                        // ms 추가
+                        String body = sb.toString();
+                        out.print(body.substring(0, body.length()-1) + ",\"ms\":"+ms+"}");
+                    } catch(Exception ex) {
+                        long ms = System.currentTimeMillis() - t0;
+                        out.print("{\"status\":\"FAIL\",\"error\":\""+escape(ex.getMessage())+"\",\"ms\":"+ms+"}");
+                    }
+                    break;
+                }
+
                 // ── 데이터 초기화 (실제 DPL 데이터로 교체) ──────────
                 case "mirror_reload": {
                     // 실 LAW_* 원본 → dpl_* 미러 재적재 (LAW_*는 READ only, dpl_*만 write)
