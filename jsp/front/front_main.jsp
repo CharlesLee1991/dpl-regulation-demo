@@ -12,6 +12,7 @@
 <script src="/static/js/jquery-1.8.3.min.js"></script>
 <script src="/static/js/swiper-bundle.min.js"></script>
 <script src="/static/js/jquery.easing.min.js"></script>
+<script src="/static/js/jquery.rollingCounter.min.js"></script>
 <script src="/static/js/front_common.js"></script>
 </head>
 <body>
@@ -50,15 +51,15 @@
     <ul>
       <a href="/front/legal/"><li class="counter_ui">
         <em>법규정보</em>
-        <strong class="counter"><fmt:formatNumber value="${cntLegal}" type="number"/></strong> 개
+        <strong class="counter" data-count="${cntLegal}"></strong> 개
       </li></a>
       <a href="/front/safety/"><li class="counter_ui">
         <em>위해정보</em>
-        <strong class="counter"><fmt:formatNumber value="${cntSafety}" type="number"/></strong> 개
+        <strong class="counter" data-count="${cntSafety}"></strong> 개
       </li></a>
       <a href="/front/standard/"><li class="counter_ui">
         <em>롯데 스탠다드</em>
-        <strong class="counter"><fmt:formatNumber value="${cntStandard}" type="number"/></strong> 개
+        <strong class="counter" data-count="${cntStandard}"></strong> 개
       </li></a>
     </ul>
   </div>

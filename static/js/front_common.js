@@ -95,6 +95,34 @@ $(function(){
 	});
 	*/
 
-	//counter_ui — 숫자는 서버에서 콤마포맷 정적 렌더 (rollingCounter 플러그인 제거)
-	// (rollingCounter 호출 제거: 플러그인 미로드로 TypeError 발생하여 이후 JS 중단됨)
+	//counter_ui — v5.4: 원본 common.js 실행부 복원 (jquery.rollingCounter.min.js 이식 완료)
+	// v4.4에서 플러그인 미로드로 TypeError → 이후 JS 전역중단(swiper 동반사망) 됐던 건.
+	// 플러그인을 실제 이식했고, 재발 방지를 위해 존재검사 + try-catch로 격리한다.
+	function dplCommaFallback() {
+		$('.counter_ui .counter').each(function(){
+			var v = $(this).attr('data-count') || '';
+			$(this).text(String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+		});
+	}
+	try {
+		if ($.fn.rollingCounter) {
+			$('.counter_ui').each(function(){
+				$(this).find(".counter").rollingCounter({
+					animate : true,
+					attrCount : 'data-count',
+					delayTime : 20 ,
+					waitTime : 1 ,
+					easing : 'easeOutQuint',
+					rollingCount : 50,
+					duration : 1000
+				});
+			});
+		} else {
+			console.warn('[DPL] rollingCounter plugin not loaded - fallback');
+			dplCommaFallback();
+		}
+	} catch (e) {
+		console.error('[DPL] rollingCounter init failed', e);
+		dplCommaFallback();
+	}
 })
