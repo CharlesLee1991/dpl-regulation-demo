@@ -18,15 +18,15 @@ public class FrontSetupExtension {
             CREATE TABLE dpl_law_category (
                 LC_IDX INT IDENTITY(1,1) PRIMARY KEY,
                 LC_DEPTH INT DEFAULT 1,
-                LC_CATEGORY NVARCHAR(50) NOT NULL,
+                LC_CATEGORY NVARCHAR(MAX),
                 LC_PARENT_IDX INT DEFAULT 0,
-                LC_IS_USE CHAR(1) DEFAULT 'Y',
+                LC_IS_USE NVARCHAR(10) DEFAULT 'Y',
                 LC_SORT INT DEFAULT 0,
-                LC_REG_USER NVARCHAR(50),
+                LC_REG_USER NVARCHAR(MAX),
                 LC_REG_DATE DATETIME DEFAULT GETDATE(),
-                LC_UPD_USER NVARCHAR(50),
+                LC_UPD_USER NVARCHAR(MAX),
                 LC_UPD_DATE DATETIME,
-                LC_ICODE NVARCHAR(50)
+                LC_ICODE NVARCHAR(MAX)
             )""");
         // v5.3: 카테고리 시드 제거 — 원본 LAW_CATEGORY(67행) 미러로 대체
     }
@@ -45,19 +45,19 @@ public class FrontSetupExtension {
             CREATE TABLE dpl_riskdb (
                 LR_IDX INT IDENTITY(1,1) PRIMARY KEY,
                 LS_IDX INT DEFAULT 0,
-                LR_TITLE NVARCHAR(300) NOT NULL,
-                LR_TYPE NVARCHAR(100),
-                LR_FACTOR NVARCHAR(200),
+                LR_TITLE NVARCHAR(MAX),
+                LR_TYPE NVARCHAR(MAX),
+                LR_FACTOR NVARCHAR(MAX),
                 LR_CONTENTS NVARCHAR(MAX),
                 LR_LEVEL INT DEFAULT 1,
-                LR_URL NVARCHAR(500),
-                LR_SOURCE NVARCHAR(200),
+                LR_URL NVARCHAR(MAX),
+                LR_SOURCE NVARCHAR(MAX),
                 LR_REG_DATE DATETIME DEFAULT GETDATE(),
-                LR_REG_USER NVARCHAR(50),
-                LR_REG_IP NVARCHAR(50),
+                LR_REG_USER NVARCHAR(MAX),
+                LR_REG_IP NVARCHAR(MAX),
                 LR_UPD_DATE DATETIME,
-                LR_UPD_USER NVARCHAR(50),
-                LR_UPD_IP NVARCHAR(50),
+                LR_UPD_USER NVARCHAR(MAX),
+                LR_UPD_IP NVARCHAR(MAX),
                 LS_REG_DATE DATETIME
             )""");
         // 원본 LAW_STANDARD 컬럼 미러
@@ -65,41 +65,41 @@ public class FrontSetupExtension {
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_standard')
             CREATE TABLE dpl_standard (
                 LS_IDX INT IDENTITY(1,1) PRIMARY KEY,
-                LS_CODE NVARCHAR(100),
-                LS_DIV NVARCHAR(50),
-                LS_REV_DATE NVARCHAR(20),
-                LS_TITLE NVARCHAR(300) NOT NULL,
-                LS_ITEMS NVARCHAR(500),
-                LS_ATTA NVARCHAR(300),
-                LS_ATTA_PATH NVARCHAR(500),
+                LS_CODE NVARCHAR(MAX),
+                LS_DIV NVARCHAR(MAX),
+                LS_REV_DATE NVARCHAR(MAX),
+                LS_TITLE NVARCHAR(MAX),
+                LS_ITEMS NVARCHAR(MAX),
+                LS_ATTA NVARCHAR(MAX),
+                LS_ATTA_PATH NVARCHAR(MAX),
                 LS_REG_DATE DATETIME DEFAULT GETDATE(),
-                LS_REG_USER NVARCHAR(50),
-                LS_REG_IP NVARCHAR(50),
+                LS_REG_USER NVARCHAR(MAX),
+                LS_REG_IP NVARCHAR(MAX),
                 LS_UPD_DATE DATETIME,
-                LS_UPD_USER NVARCHAR(50),
-                LS_UPD_IP NVARCHAR(50)
+                LS_UPD_USER NVARCHAR(MAX),
+                LS_UPD_IP NVARCHAR(MAX)
             )""");
         // 원본 LAW_SHORTCLASS 컬럼 미러
         exec(conn, """
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_shortclass')
             CREATE TABLE dpl_shortclass (
                 LS_IDX INT IDENTITY(1,1) PRIMARY KEY,
-                LS_DIV NVARCHAR(50),
-                LS_TYPE NVARCHAR(50),
-                LS_TITLE NVARCHAR(300) NOT NULL,
+                LS_DIV NVARCHAR(MAX),
+                LS_TYPE NVARCHAR(MAX),
+                LS_TITLE NVARCHAR(MAX),
                 LS_CONTENTS NVARCHAR(MAX),
-                LS_THUMB NVARCHAR(300),
-                LS_THUMB_PATH NVARCHAR(500),
-                LS_ATTA NVARCHAR(300),
-                LS_ATTA_PATH NVARCHAR(500),
-                LS_RECYN CHAR(1) DEFAULT 'N',
-                LS_SHOWYN CHAR(1) DEFAULT 'Y',
+                LS_THUMB NVARCHAR(MAX),
+                LS_THUMB_PATH NVARCHAR(MAX),
+                LS_ATTA NVARCHAR(MAX),
+                LS_ATTA_PATH NVARCHAR(MAX),
+                LS_RECYN NVARCHAR(10) DEFAULT 'N',
+                LS_SHOWYN NVARCHAR(10) DEFAULT 'Y',
                 LS_REG_DATE DATETIME DEFAULT GETDATE(),
-                LS_REG_USER NVARCHAR(50),
-                LS_REG_IP NVARCHAR(50),
+                LS_REG_USER NVARCHAR(MAX),
+                LS_REG_IP NVARCHAR(MAX),
                 LS_UPD_DATE DATETIME,
-                LS_UPD_USER NVARCHAR(50),
-                LS_UPD_IP NVARCHAR(50),
+                LS_UPD_USER NVARCHAR(MAX),
+                LS_UPD_IP NVARCHAR(MAX),
                 LS_HIT INT DEFAULT 0,
                 LN_IDX INT DEFAULT 0
             )""");
@@ -108,7 +108,7 @@ public class FrontSetupExtension {
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_grademark')
             CREATE TABLE dpl_grademark (
                 LG_IDX INT IDENTITY(1,1) PRIMARY KEY,
-                LG_IS_USE CHAR(1) DEFAULT 'Y'
+                LG_IS_USE NVARCHAR(10) DEFAULT 'Y'
             )""");
         // ── v5.3: dpl_law_safety 폐기 ──────────────────────────────────
         // 원본 제품안전뉴스 = ctrlBoard(BBS_LEGAL_SAFETY=2) → LAW_BOARD BD_CODE=2.
@@ -119,34 +119,35 @@ public class FrontSetupExtension {
             DROP TABLE dpl_law_safety""");
         // ── 게시판 (원본 law_board 컬럼 전체 미러) ──
         // BD_CODE: 1=법규 제·개정 / 2=제품안전뉴스(글로벌 안전정보) / 6=유용한정보 / 8=동영상 / 10=안전센터
+        // v5.3: 컬럼 길이는 원본 실측 기준 넉넉히 (BD_SUBTITLE/BD_CONTENTS = 원본 text 형)
         dropIfOldSchema(conn, "dpl_law_board", "BD_ETC_COLS_4", true);  // 구 12컬럼 스키마면 DROP
         exec(conn, """
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_law_board')
             CREATE TABLE dpl_law_board (
                 BD_IDX INT IDENTITY(1,1) PRIMARY KEY,
                 BD_CODE INT NOT NULL,
-                BD_TITLE NVARCHAR(300) NOT NULL,
+                BD_TITLE NVARCHAR(MAX),
                 BD_HIT INT DEFAULT 0,
-                BD_WRITER NVARCHAR(50) DEFAULT N'관리자',
-                BD_IS_ANSWER CHAR(1) DEFAULT 'N',
-                BD_ETC_COLS_1 NVARCHAR(200) DEFAULT '',
-                BD_ETC_COLS_2 NVARCHAR(200) DEFAULT '',
-                BD_ETC_COLS_3 NVARCHAR(200) DEFAULT '',
-                BD_ETC_COLS_4 NVARCHAR(200) DEFAULT '',
-                BD_ETC_COLS_5 NVARCHAR(200) DEFAULT '',
-                BD_ETC_COLS_6 NVARCHAR(200) DEFAULT '',
-                BD_ETC_COLS_7 NVARCHAR(200) DEFAULT '',
-                BD_ETC_COLS_8 NVARCHAR(200) DEFAULT '',
-                BD_ETC_COLS_9 NVARCHAR(200) DEFAULT '',
-                BD_ETC_COLS_10 NVARCHAR(200) DEFAULT '',
-                BD_SUBTITLE NVARCHAR(300) DEFAULT '',
+                BD_WRITER NVARCHAR(MAX) DEFAULT N'관리자',
+                BD_IS_ANSWER NVARCHAR(MAX) DEFAULT 'N',
+                BD_ETC_COLS_1 NVARCHAR(MAX),
+                BD_ETC_COLS_2 NVARCHAR(MAX),
+                BD_ETC_COLS_3 NVARCHAR(MAX),
+                BD_ETC_COLS_4 NVARCHAR(MAX),
+                BD_ETC_COLS_5 NVARCHAR(MAX),
+                BD_ETC_COLS_6 NVARCHAR(MAX),
+                BD_ETC_COLS_7 NVARCHAR(MAX),
+                BD_ETC_COLS_8 NVARCHAR(MAX),
+                BD_ETC_COLS_9 NVARCHAR(MAX),
+                BD_ETC_COLS_10 NVARCHAR(MAX),
+                BD_SUBTITLE NVARCHAR(MAX),
                 BD_CONTENTS NVARCHAR(MAX),
-                BD_REG_USER NVARCHAR(50),
+                BD_REG_USER NVARCHAR(MAX),
                 BD_REG_DATE DATETIME DEFAULT GETDATE(),
-                BD_REG_IP NVARCHAR(50),
-                BD_UPD_USER NVARCHAR(50),
+                BD_REG_IP NVARCHAR(MAX),
+                BD_UPD_USER NVARCHAR(MAX),
                 BD_UPD_DATE DATETIME,
-                BD_UPD_IP NVARCHAR(50)
+                BD_UPD_IP NVARCHAR(MAX)
             )""");
         System.out.println("[DPL] 프론트 테이블 생성 완료");
     }
