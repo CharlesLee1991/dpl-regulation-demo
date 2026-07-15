@@ -162,9 +162,17 @@ public class AjaxServlet extends HttpServlet {
                         {"dpl_notify","LAW_NOTIFY","LN_TITLE=LN_NOTIFY"},
                         {"dpl_safety","LAW_SAFETY",""},
                         {"dpl_items","LAW_ITEMS",""},
-                        {"dpl_items_detail","LAW_ITEMS_DETAIL",""}
+                        {"dpl_items_detail","LAW_ITEMS_DETAIL",""},
+                        // v5.3 추가 — 프론트가 쓰는데 미러 대상에서 누락됐던 테이블들
+                        {"dpl_grademark","LAW_GRADEMARK",""},      // 메인 카운트 5중 조인용
+                        {"dpl_law_category","LAW_CATEGORY",""},    // 카테고리
+                        {"dpl_riskdb","LAW_RISKDB",""},            // F4 위해정보DB
+                        {"dpl_standard","LAW_STANDARD",""},        // F5 롯데 스탠다드
+                        {"dpl_shortclass","LAW_SHORTCLASS",""},    // F6 셀프러닝
+                        {"dpl_law_board","LAW_BOARD",""}           // 게시판(제개정1·뉴스2·정보6·영상8·안전10)
                     };
-                    String[] delOrder = {"dpl_items_detail","dpl_items","dpl_safety","dpl_notify","dpl_regulation","dpl_regulation_legal"};
+                    String[] delOrder = {"dpl_law_board","dpl_shortclass","dpl_standard","dpl_riskdb","dpl_law_category","dpl_grademark",
+                                         "dpl_items_detail","dpl_items","dpl_safety","dpl_notify","dpl_regulation","dpl_regulation_legal"};
                     StringBuilder rpt = new StringBuilder("{\"status\":\"OK\",\"tables\":{");
                     // 1) 미러 비우기 (자식→부모). 별도 커넥션.
                     try (java.sql.Connection dc = db.DBPool.getConnection();

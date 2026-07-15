@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * 관리자 숏클래스 관리 — 원본 _admin/bbs/support_shortclass_{list,form,proc}.asp 정합
  * URL: /shortclass/?mode=list|form|proc   테이블: dpl_shortclass (SC_*)
- * 원본 폼: 제목/교육분야/내용/썸네일/동영상/노출 → SC_TITLE/SC_TYPE/SC_DESC/SC_THUMB_URL/SC_VIDEO_URL/SC_IS_USE (+규제법률 SC_LL_IDX)
+ * 원본 폼: 제목/교육분야/내용/썸네일/동영상/노출 → LS_TITLE/LS_DIV/LS_CONTENTS/LS_THUMB_PATH/LS_ATTA_PATH/LS_SHOWYN (+규제법률 LN_IDX)
  */
 public class ShortclassAdminServlet extends HttpServlet {
     private static final int PS = 10;
@@ -36,14 +36,14 @@ public class ShortclassAdminServlet extends HttpServlet {
         String w = "WHERE 1=1";
         if (!qWord.isEmpty()) {
             String sw = qWord.replace("'","''");
-            if      ("TITLE".equals(qKey)) w += " AND s.SC_TITLE LIKE N'%"+sw+"%'";
-            else if ("CONT".equals(qKey))  w += " AND ISNULL(s.SC_DESC,'') LIKE N'%"+sw+"%'";
-            else w += " AND (s.SC_TITLE LIKE N'%"+sw+"%' OR ISNULL(s.SC_DESC,'') LIKE N'%"+sw+"%')";
+            if      ("TITLE".equals(qKey)) w += " AND s.LS_TITLE LIKE N'%"+sw+"%'";
+            else if ("CONT".equals(qKey))  w += " AND ISNULL(s.LS_CONTENTS,'') LIKE N'%"+sw+"%'";
+            else w += " AND (s.LS_TITLE LIKE N'%"+sw+"%' OR ISNULL(s.LS_CONTENTS,'') LIKE N'%"+sw+"%')";
         }
-        List<Map<String,Object>> list = sql("SELECT s.SC_IDX,s.SC_TITLE,ISNULL(s.SC_TYPE,'') AS SC_TYPE,"
-            + "ISNULL(l.LL_TITLE,'') AS LL_TITLE,s.SC_IS_USE,CONVERT(NVARCHAR(10),s.SC_REG_DATE,120) AS SC_REG_DATE "
-            + "FROM dpl_shortclass s LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=s.SC_LL_IDX "
-            + w+" ORDER BY s.SC_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        List<Map<String,Object>> list = sql("SELECT s.LS_IDX,s.LS_TITLE,ISNULL(s.LS_DIV,'') AS LS_DIV,"
+            + "ISNULL(l.LL_TITLE,'') AS LL_TITLE,s.LS_SHOWYN,CONVERT(NVARCHAR(10),s.LS_REG_DATE,120) AS LS_REG_DATE "
+            + "FROM dpl_shortclass s LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=s.LN_IDX "
+            + w+" ORDER BY s.LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_shortclass s "+w);
 
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
@@ -56,10 +56,10 @@ public class ShortclassAdminServlet extends HttpServlet {
         int idx = toInt(req.getParameter("sc_idx"), 0);
         Map<String,Object> info = null;
         if (idx>0) {
-            List<Map<String,Object>> rows = sql("SELECT SC_IDX,SC_TITLE,ISNULL(SC_DESC,'') AS SC_DESC,"
-                + "ISNULL(SC_TYPE,'') AS SC_TYPE,ISNULL(SC_LL_IDX,0) AS SC_LL_IDX,"
-                + "ISNULL(SC_THUMB_URL,'') AS SC_THUMB_URL,ISNULL(SC_VIDEO_URL,'') AS SC_VIDEO_URL,SC_IS_USE "
-                + "FROM dpl_shortclass WHERE SC_IDX="+idx);
+            List<Map<String,Object>> rows = sql("SELECT LS_IDX,LS_TITLE,ISNULL(LS_CONTENTS,'') AS LS_CONTENTS,"
+                + "ISNULL(LS_DIV,'') AS LS_DIV,ISNULL(LN_IDX,0) AS LN_IDX,"
+                + "ISNULL(LS_THUMB_PATH,'') AS LS_THUMB_PATH,ISNULL(LS_ATTA_PATH,'') AS LS_ATTA_PATH,LS_SHOWYN "
+                + "FROM dpl_shortclass WHERE LS_IDX="+idx);
             if (!rows.isEmpty()) info = rows.get(0);
         }
         req.setAttribute("info",info); req.setAttribute("scIdx",idx);
@@ -88,22 +88,22 @@ public class ShortclassAdminServlet extends HttpServlet {
             try (Connection conn = DBPool.getConnection()) {
                 if ("ADD".equals(action)) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "INSERT INTO dpl_shortclass (SC_TITLE,SC_DESC,SC_TYPE,SC_CATE,SC_LL_IDX,SC_THUMB_URL,SC_VIDEO_URL,SC_IS_USE,SC_REG_DATE) "
-                        + "VALUES (?,?,?,0,?,?,?,?,GETDATE())")) {
+                        "INSERT INTO dpl_shortclass (LS_TITLE,LS_CONTENTS,LS_DIV,LN_IDX,LS_THUMB_PATH,LS_ATTA_PATH,LS_SHOWYN,LS_REG_DATE) "
+                        + "VALUES (?,?,?,?,?,?,?,GETDATE())")) {
                         ps.setString(1,title); ps.setString(2,desc); ps.setString(3,type);
                         ps.setInt(4,llIdx); ps.setString(5,thumb); ps.setString(6,video); ps.setString(7,isUse);
                         ps.executeUpdate();
                     }
                 } else if ("MOD".equals(action) && idx>0) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE dpl_shortclass SET SC_TITLE=?,SC_DESC=?,SC_TYPE=?,SC_LL_IDX=?,SC_THUMB_URL=?,SC_VIDEO_URL=?,SC_IS_USE=? WHERE SC_IDX=?")) {
+                        "UPDATE dpl_shortclass SET LS_TITLE=?,LS_CONTENTS=?,LS_DIV=?,LN_IDX=?,LS_THUMB_PATH=?,LS_ATTA_PATH=?,LS_SHOWYN=? WHERE LS_IDX=?")) {
                         ps.setString(1,title); ps.setString(2,desc); ps.setString(3,type);
                         ps.setInt(4,llIdx); ps.setString(5,thumb); ps.setString(6,video); ps.setString(7,isUse);
                         ps.setInt(8,idx);
                         ps.executeUpdate();
                     }
                 } else if ("DEL".equals(action) && idx>0) {
-                    try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dpl_shortclass WHERE SC_IDX=?")) {
+                    try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dpl_shortclass WHERE LS_IDX=?")) {
                         ps.setInt(1,idx); ps.executeUpdate();
                     }
                 }

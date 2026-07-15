@@ -8,8 +8,8 @@ import java.util.*;
 
 /**
  * 관리자 제품안전뉴스 관리 — 원본 _admin/safetydb/legal_safety_{list,form,proc}.asp 정합
- * URL: /news_admin/?mode=list|form|proc   테이블: dpl_law_safety (LS_* 원본미러)
- * 정보구분 LS_COLS_03(1일반안전/2상품위해), 중요도 LS_COLS_04(1관심/2주의/3경계/4심각), 출처 LS_COLS_02, 링크 LS_COLS_01
+ * URL: /news_admin/?mode=list|form|proc   테이블: dpl_law_board (LS_* 원본미러)
+ * 정보구분 BD_ETC_COLS_3(1일반안전/2상품위해), 중요도 BD_ETC_COLS_4(1관심/2주의/3경계/4심각), 출처 BD_ETC_COLS_2, 링크 BD_ETC_COLS_1
  */
 public class NewsAdminServlet extends HttpServlet {
     private static final int PS = 10;
@@ -33,18 +33,18 @@ public class NewsAdminServlet extends HttpServlet {
         String qWord = nvl(req.getParameter("qWord"), "");
         int offset = (page-1)*PS;
 
-        String w = "WHERE 1=1";
+        String w = "WHERE BD_CODE=2";   // v5.3: 뉴스=BBS_LEGAL_SAFETY(2)
         if (!qWord.isEmpty()) {
             String sw = qWord.replace("'","''");
-            if      ("TITLE".equals(qKey)) w += " AND LS_TITLE LIKE N'%"+sw+"%'";
-            else if ("CONT".equals(qKey))  w += " AND ISNULL(LS_CONTENT,'') LIKE N'%"+sw+"%'";
-            else w += " AND (LS_TITLE LIKE N'%"+sw+"%' OR ISNULL(LS_CONTENT,'') LIKE N'%"+sw+"%')";
+            if      ("TITLE".equals(qKey)) w += " AND BD_TITLE LIKE N'%"+sw+"%'";
+            else if ("CONT".equals(qKey))  w += " AND ISNULL(BD_CONTENTS,'') LIKE N'%"+sw+"%'";
+            else w += " AND (BD_TITLE LIKE N'%"+sw+"%' OR ISNULL(BD_CONTENTS,'') LIKE N'%"+sw+"%')";
         }
-        List<Map<String,Object>> list = sql("SELECT LS_IDX,LS_TITLE,ISNULL(LS_COLS_02,'') AS LS_COLS_02,"
-            + "ISNULL(LS_COLS_03,1) AS LS_COLS_03,ISNULL(LS_COLS_04,1) AS LS_COLS_04,LS_IS_USE,"
-            + "CONVERT(NVARCHAR(10),LS_REG_DATE,120) AS LS_REG_DATE "
-            + "FROM dpl_law_safety "+w+" ORDER BY LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
-        int total = countSql("SELECT COUNT(*) FROM dpl_law_safety "+w);
+        List<Map<String,Object>> list = sql("SELECT BD_IDX,BD_TITLE,ISNULL(BD_ETC_COLS_2,'') AS BD_ETC_COLS_2,"
+            + "ISNULL(BD_ETC_COLS_3,'1') AS BD_ETC_COLS_3,ISNULL(BD_ETC_COLS_4,'1') AS BD_ETC_COLS_4,"
+            + "CONVERT(NVARCHAR(10),BD_REG_DATE,120) AS BD_REG_DATE "
+            + "FROM dpl_law_board "+w+" ORDER BY BD_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        int total = countSql("SELECT COUNT(*) FROM dpl_law_board "+w);
 
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
@@ -56,10 +56,10 @@ public class NewsAdminServlet extends HttpServlet {
         int idx = toInt(req.getParameter("ls_idx"), 0);
         Map<String,Object> info = null;
         if (idx>0) {
-            List<Map<String,Object>> rows = sql("SELECT LS_IDX,LS_TITLE,ISNULL(LS_CONTENT,'') AS LS_CONTENT,"
-                + "ISNULL(LS_COLS_01,'') AS LS_COLS_01,ISNULL(LS_COLS_02,'') AS LS_COLS_02,"
-                + "ISNULL(LS_COLS_03,1) AS LS_COLS_03,ISNULL(LS_COLS_04,1) AS LS_COLS_04,LS_IS_USE "
-                + "FROM dpl_law_safety WHERE LS_IDX="+idx);
+            List<Map<String,Object>> rows = sql("SELECT BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS,"
+                + "ISNULL(BD_ETC_COLS_1,'') AS BD_ETC_COLS_1,ISNULL(BD_ETC_COLS_2,'') AS BD_ETC_COLS_2,"
+                + "ISNULL(BD_ETC_COLS_3,1) AS BD_ETC_COLS_3,ISNULL(BD_ETC_COLS_4,1) AS BD_ETC_COLS_4,'Y' "
+                + "FROM dpl_law_board WHERE BD_IDX="+idx);
             if (!rows.isEmpty()) info = rows.get(0);
         }
         req.setAttribute("info",info); req.setAttribute("lsIdx",idx);
@@ -87,21 +87,21 @@ public class NewsAdminServlet extends HttpServlet {
             try (Connection conn = DBPool.getConnection()) {
                 if ("ADD".equals(action)) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "INSERT INTO dpl_law_safety (LS_TITLE,LS_CONTENT,LS_COLS_01,LS_COLS_02,LS_COLS_03,LS_COLS_04,LS_HIT,LS_IS_USE,LS_REG_DATE) "
-                        + "VALUES (?,?,?,?,?,?,0,?,GETDATE())")) {
+                        "INSERT INTO dpl_law_board (BD_CODE,BD_TITLE,BD_CONTENTS,BD_ETC_COLS_1,BD_ETC_COLS_2,BD_ETC_COLS_3,BD_ETC_COLS_4,BD_HIT,BD_REG_DATE) "
+                        + "VALUES (2,?,?,?,?,?,?,0,GETDATE())")) {
                         ps.setString(1,title); ps.setString(2,cont); ps.setString(3,link); ps.setString(4,source);
-                        ps.setInt(5,c3); ps.setInt(6,c4); ps.setString(7,isUse);
+                        ps.setString(5,String.valueOf(c3)); ps.setString(6,String.valueOf(c4));
                         ps.executeUpdate();
                     }
                 } else if ("MOD".equals(action) && idx>0) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE dpl_law_safety SET LS_TITLE=?,LS_CONTENT=?,LS_COLS_01=?,LS_COLS_02=?,LS_COLS_03=?,LS_COLS_04=?,LS_IS_USE=? WHERE LS_IDX=?")) {
+                        "UPDATE dpl_law_board SET BD_TITLE=?,BD_CONTENTS=?,BD_ETC_COLS_1=?,BD_ETC_COLS_2=?,BD_ETC_COLS_3=?,BD_ETC_COLS_4=?,BD_UPD_DATE=GETDATE() WHERE BD_IDX=?")) {
                         ps.setString(1,title); ps.setString(2,cont); ps.setString(3,link); ps.setString(4,source);
-                        ps.setInt(5,c3); ps.setInt(6,c4); ps.setString(7,isUse); ps.setInt(8,idx);
+                        ps.setString(5,String.valueOf(c3)); ps.setString(6,String.valueOf(c4)); ps.setInt(7,idx);
                         ps.executeUpdate();
                     }
                 } else if ("DEL".equals(action) && idx>0) {
-                    try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dpl_law_safety WHERE LS_IDX=?")) {
+                    try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dpl_law_board WHERE BD_IDX=?")) {
                         ps.setInt(1,idx); ps.executeUpdate();
                     }
                 }

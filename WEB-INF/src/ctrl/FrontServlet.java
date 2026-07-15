@@ -65,14 +65,26 @@ public class FrontServlet extends HttpServlet {
 
     // ── 메인 ──────────────────────────────────────────────────────
     private void doMain(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        req.setAttribute("cntLegal",    count("dpl_regulation"));
-        req.setAttribute("cntSafety",   count("dpl_riskdb"));
-        req.setAttribute("cntStandard", count("dpl_standard"));
-        req.setAttribute("safetyNews",  sql("SELECT TOP 5 LS_IDX,LS_TITLE,ISNULL(LS_COLS_02,'') AS LS_COLS_02,ISNULL(LS_COLS_04,1) AS LS_COLS_04 FROM dpl_law_safety WHERE LS_IS_USE='Y' ORDER BY LS_IDX DESC"));
-        req.setAttribute("mainShort",   sql("SELECT TOP 8 SC_IDX,SC_TITLE,ISNULL(SC_DESC,'') AS SC_DESC FROM dpl_shortclass WHERE SC_IS_USE='Y' ORDER BY SC_IDX DESC"));
-        req.setAttribute("refVideo",    sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_IS_USE='Y' AND BD_CODE=8 ORDER BY BD_IDX DESC"));
-        req.setAttribute("refInfo",     sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_IS_USE='Y' AND BD_CODE=6 ORDER BY BD_IDX DESC"));
-        req.setAttribute("legalNews",   sql("SELECT TOP 5 r.LR_IDX,r.LR_TITLE,ISNULL(l.LL_TITLE,'') AS LL_TITLE,CONVERT(NVARCHAR(10),r.REG_DATE,120) AS LR_REG_DATE FROM dpl_regulation r LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX WHERE r.LR_IS_USE='Y' ORDER BY r.REG_DATE DESC"));
+        // ── 조회 가능 정보 현황 — 원본 m.main.asp getMainCnt() SQL 이식 (v5.3) ──
+        // 원본: I_CNT = LAW_ITEMS_DETAIL 5중 INNER JOIN(ITEMS·GRADEMARK·NOTIFY·REGULATION·REGULATION_LEGAL, 전부 IS_USE='Y')
+        //       R_CNT = count(LAW_RISKDB) / S_CNT = count(LAW_STANDARD)
+        req.setAttribute("cntLegal", countSql(
+            "SELECT COUNT(*) FROM dpl_items_detail AS D "
+          + "INNER JOIN (SELECT * FROM dpl_items WHERE LI_IS_USE='Y') AS LI ON D.LI_IDX=LI.LI_IDX "
+          + "INNER JOIN (SELECT * FROM dpl_grademark WHERE LG_IS_USE='Y') AS LG ON LI.LG_IDX=LG.LG_IDX "
+          + "INNER JOIN (SELECT * FROM dpl_notify WHERE LN_IS_USE='Y') AS LN ON LI.LN_IDX=LN.LN_IDX "
+          + "INNER JOIN (SELECT * FROM dpl_regulation WHERE LR_IS_USE='Y') AS LR ON LN.LR_IDX=LR.LR_IDX "
+          + "INNER JOIN (SELECT * FROM dpl_regulation_legal WHERE LL_IS_USE='Y') AS LL ON LR.LL_IDX=LL.LL_IDX "
+          + "WHERE D.LD_IS_USE='Y'"));
+        req.setAttribute("cntSafety",   countSql("SELECT COUNT(*) FROM dpl_riskdb"));
+        req.setAttribute("cntStandard", countSql("SELECT COUNT(*) FROM dpl_standard"));
+        // 제품안전뉴스 = 원본 ctrlBoard(BBS_LEGAL_SAFETY=2) → dpl_law_board BD_CODE=2 (v5.3)
+        req.setAttribute("safetyNews",  sql("SELECT TOP 5 BD_IDX,BD_TITLE,ISNULL(BD_ETC_COLS_2,'') AS BD_ETC_COLS_2,ISNULL(BD_ETC_COLS_4,'1') AS BD_ETC_COLS_4 FROM dpl_law_board WHERE BD_CODE=2 ORDER BY BD_IDX DESC"));
+        req.setAttribute("mainShort",   sql("SELECT TOP 8 LS_IDX,LS_TITLE,ISNULL(LS_CONTENTS,'') AS LS_CONTENTS FROM dpl_shortclass WHERE LS_SHOWYN='Y' ORDER BY LS_IDX DESC"));
+        req.setAttribute("refVideo",    sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_CODE=8 ORDER BY BD_IDX DESC"));
+        req.setAttribute("refInfo",     sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_CODE=6 ORDER BY BD_IDX DESC"));
+        // 법규 제·개정 = 원본 ctrlBoard(BBS_LEGAL_REVISE=1) → dpl_law_board BD_CODE=1 (v5.3)
+        req.setAttribute("legalNews",   sql("SELECT TOP 5 BD_IDX,BD_TITLE,ISNULL(BD_ETC_COLS_1,'') AS BD_ETC_COLS_1,CONVERT(NVARCHAR(10),BD_REG_DATE,120) AS BD_REG_DATE FROM dpl_law_board WHERE BD_CODE=1 ORDER BY BD_IDX DESC"));
         req.getRequestDispatcher("/jsp/front/front_main.jsp").forward(req, resp);
     }
 
@@ -157,20 +169,20 @@ public class FrontServlet extends HttpServlet {
         String qCate = nvl(req.getParameter("qCate"),"0");
         String qLT   = nvl(req.getParameter("qLT"),"0");
         String qLL   = nvl(req.getParameter("qLL"),"0");
-        String w = "WHERE RD_IS_USE='Y'";
+        // v5.3: 원본 LAW_RISKDB 컬럼(LR_*) 기준. JSP 호환 위해 기존 별칭(RD_*)으로 매핑.
+        String w = "WHERE 1=1";
         if (!qWord.isEmpty()) {
             String sw = qWord.replace("'","''");
             String col;
-            if      ("FACTOR".equals(qKey))   col="RD_FACTOR";
-            else if ("CONTENTS".equals(qKey)) col="RD_CONTENT";
-            else if ("KEYWORD".equals(qKey))  col="RD_TITLE";   // 키워드=제목 매칭
-            else                              col="RD_TITLE";
+            if      ("FACTOR".equals(qKey))   col="LR_FACTOR";
+            else if ("CONTENTS".equals(qKey)) col="LR_CONTENTS";
+            else if ("KEYWORD".equals(qKey))  col="LR_TITLE";   // 키워드=제목 매칭
+            else                              col="LR_TITLE";
             w += " AND "+col+" LIKE N'%"+sw+"%'";
         }
-        if (!"0".equals(qCate) && !qCate.isEmpty()) w += " AND RD_CATE="+toInt(qCate,0);
-        if (!"0".equals(qLT)   && !qLT.isEmpty())   w += " AND RD_TYPE=N'"+qLT.replace("'","''")+"'";
-        if (!"0".equals(qLL)   && !qLL.isEmpty())   w += " AND RD_LEVEL="+toInt(qLL,0);
-        List<Map<String,Object>> list = sql("SELECT RD_IDX,RD_TITLE,RD_TYPE,RD_FACTOR,RD_LEVEL,RD_SOURCE,CONVERT(NVARCHAR(10),RD_REG_DATE,120) AS RD_REG_DATE FROM dpl_riskdb "+w+" ORDER BY RD_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        if (!"0".equals(qLT)   && !qLT.isEmpty())   w += " AND LR_TYPE=N'"+qLT.replace("'","''")+"'";
+        if (!"0".equals(qLL)   && !qLL.isEmpty())   w += " AND LR_LEVEL="+toInt(qLL,0);
+        List<Map<String,Object>> list = sql("SELECT LR_IDX AS RD_IDX,LR_TITLE AS RD_TITLE,LR_TYPE AS RD_TYPE,LR_FACTOR AS RD_FACTOR,LR_LEVEL AS RD_LEVEL,LR_SOURCE AS RD_SOURCE,CONVERT(NVARCHAR(10),LR_REG_DATE,120) AS RD_REG_DATE FROM dpl_riskdb "+w+" ORDER BY LR_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_riskdb "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
@@ -186,16 +198,18 @@ public class FrontServlet extends HttpServlet {
         String qWord = nvl(req.getParameter("qWord"),"");
         String qC3   = nvl(req.getParameter("qC3"),"0");   // 정보구분
         String qC4   = nvl(req.getParameter("qC4"),"0");   // 중요도등급
-        String w = "WHERE LS_IS_USE='Y'";
+        // v5.3: 원본 제품안전뉴스 = ctrlBoard(BBS_LEGAL_SAFETY=2) → dpl_law_board BD_CODE=2.
+        // 기존 dpl_law_safety(자체 신설)는 폐기. JSP 호환 위해 기존 별칭(LS_*)으로 매핑.
+        String w = "WHERE BD_CODE=2";
         if (!qWord.isEmpty()) {
             String sw = qWord.replace("'","''");
-            if      ("SOURCE".equals(qKey)) w += " AND LS_COLS_02 LIKE N'%"+sw+"%'";
-            else                            w += " AND LS_TITLE LIKE N'%"+sw+"%'";
+            if      ("SOURCE".equals(qKey)) w += " AND BD_ETC_COLS_2 LIKE N'%"+sw+"%'";
+            else                            w += " AND BD_TITLE LIKE N'%"+sw+"%'";
         }
-        if (!"0".equals(qC3) && !qC3.isEmpty()) w += " AND LS_COLS_03="+toInt(qC3,0);
-        if (!"0".equals(qC4) && !qC4.isEmpty()) w += " AND LS_COLS_04="+toInt(qC4,0);
-        List<Map<String,Object>> list = sql("SELECT LS_IDX,LS_TITLE,LS_COLS_02,LS_COLS_03,LS_COLS_04,REPLACE(CONVERT(NVARCHAR(10),LS_REG_DATE,23),'-','.') AS LS_REG_DATE FROM dpl_law_safety "+w+" ORDER BY LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
-        int total = countSql("SELECT COUNT(*) FROM dpl_law_safety "+w);
+        if (!"0".equals(qC3) && !qC3.isEmpty()) w += " AND BD_ETC_COLS_3=N'"+qC3.replace("'","''")+"'";
+        if (!"0".equals(qC4) && !qC4.isEmpty()) w += " AND BD_ETC_COLS_4=N'"+qC4.replace("'","''")+"'";
+        List<Map<String,Object>> list = sql("SELECT BD_IDX AS LS_IDX,BD_TITLE AS LS_TITLE,ISNULL(BD_ETC_COLS_2,'') AS LS_COLS_02,ISNULL(BD_ETC_COLS_3,'') AS LS_COLS_03,ISNULL(BD_ETC_COLS_4,'1') AS LS_COLS_04,REPLACE(CONVERT(NVARCHAR(10),BD_REG_DATE,23),'-','.') AS LS_REG_DATE FROM dpl_law_board "+w+" ORDER BY BD_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        int total = countSql("SELECT COUNT(*) FROM dpl_law_board "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
         req.setAttribute("qKey",qKey); req.setAttribute("qWord",qWord);
@@ -206,7 +220,7 @@ public class FrontServlet extends HttpServlet {
     // ── 위해정보 상세 ──────────────────────────────────────────────
     private void doRiskdbView(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         int idx = toInt(req.getParameter("rd_idx"),0);
-        List<Map<String,Object>> rows = idx>0?sql("SELECT RD_IDX,RD_TITLE,RD_TYPE,RD_FACTOR,RD_LEVEL,RD_SOURCE,RD_LINK,RD_CONTENT,CONVERT(NVARCHAR(10),RD_REG_DATE,120) AS RD_REG_DATE FROM dpl_riskdb WHERE RD_IDX="+idx):new ArrayList<>();
+        List<Map<String,Object>> rows = idx>0?sql("SELECT LR_IDX AS RD_IDX,LR_TITLE AS RD_TITLE,LR_TYPE AS RD_TYPE,LR_FACTOR AS RD_FACTOR,LR_LEVEL AS RD_LEVEL,LR_SOURCE AS RD_SOURCE,LR_URL AS RD_LINK,LR_CONTENTS AS RD_CONTENT,CONVERT(NVARCHAR(10),LR_REG_DATE,120) AS RD_REG_DATE FROM dpl_riskdb WHERE LR_IDX="+idx):new ArrayList<>();
         req.setAttribute("info",rows.isEmpty()?new LinkedHashMap<>():rows.get(0));
         req.getRequestDispatcher("/jsp/front/front_riskdb_view.jsp").forward(req, resp);
     }
@@ -218,16 +232,16 @@ public class FrontServlet extends HttpServlet {
         String qWord = nvl(req.getParameter("qWord"),"");
         String qCate = nvl(req.getParameter("qCate"),"0");
         String qLD   = nvl(req.getParameter("qLD"),"0");
-        String w = "WHERE ST_IS_USE='Y'";
+        // v5.3: 원본 LAW_STANDARD 컬럼(LS_*) 기준. JSP 호환 위해 기존 별칭(ST_*)으로 매핑.
+        String w = "WHERE 1=1";
         if (!qWord.isEmpty()) {
             String sw = qWord.replace("'","''");
-            if      ("CODE".equals(qKey))  w += " AND ST_CODE LIKE N'%"+sw+"%'";
-            else if ("TITLE".equals(qKey)) w += " AND ST_TITLE LIKE N'%"+sw+"%'";
-            else                           w += " AND ST_ITEMS LIKE N'%"+sw+"%'";
+            if      ("CODE".equals(qKey))  w += " AND LS_CODE LIKE N'%"+sw+"%'";
+            else if ("TITLE".equals(qKey)) w += " AND LS_TITLE LIKE N'%"+sw+"%'";
+            else                           w += " AND LS_ITEMS LIKE N'%"+sw+"%'";
         }
-        if (!"0".equals(qCate) && !qCate.isEmpty()) w += " AND ST_CATE="+toInt(qCate,0);
-        if (!"0".equals(qLD)   && !qLD.isEmpty())   w += " AND ST_DIV=N'"+qLD.replace("'","''")+"'";
-        List<Map<String,Object>> list = sql("SELECT ST_IDX,ST_DIV,ST_CODE,ST_TITLE,ST_ITEMS,ST_VER_DATE FROM dpl_standard "+w+" ORDER BY ST_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        if (!"0".equals(qLD)   && !qLD.isEmpty())   w += " AND LS_DIV=N'"+qLD.replace("'","''")+"'";
+        List<Map<String,Object>> list = sql("SELECT LS_IDX AS ST_IDX,LS_DIV AS ST_DIV,LS_CODE AS ST_CODE,LS_TITLE AS ST_TITLE,LS_ITEMS AS ST_ITEMS,LS_REV_DATE AS ST_VER_DATE FROM dpl_standard "+w+" ORDER BY LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_standard "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
@@ -239,7 +253,7 @@ public class FrontServlet extends HttpServlet {
     // ── 롯데스탠다드 상세 ──────────────────────────────────────────
     private void doStandardView(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         int idx = toInt(req.getParameter("st_idx"),0);
-        List<Map<String,Object>> rows = idx>0?sql("SELECT ST_IDX,ST_DIV,ST_CODE,ST_TITLE,ST_ITEMS,ST_VER_DATE,ST_CONTENT,CONVERT(NVARCHAR(10),ST_REG_DATE,120) AS ST_REG_DATE FROM dpl_standard WHERE ST_IDX="+idx):new ArrayList<>();
+        List<Map<String,Object>> rows = idx>0?sql("SELECT LS_IDX AS ST_IDX,LS_DIV AS ST_DIV,LS_CODE AS ST_CODE,LS_TITLE AS ST_TITLE,LS_ITEMS AS ST_ITEMS,LS_REV_DATE AS ST_VER_DATE,'' AS ST_CONTENT,CONVERT(NVARCHAR(10),LS_REG_DATE,120) AS ST_REG_DATE FROM dpl_standard WHERE LS_IDX="+idx):new ArrayList<>();
         req.setAttribute("info",rows.isEmpty()?new LinkedHashMap<>():rows.get(0));
         req.getRequestDispatcher("/jsp/front/front_standard_view.jsp").forward(req, resp);
     }
@@ -254,7 +268,7 @@ public class FrontServlet extends HttpServlet {
         int page = toInt(req.getParameter("page"),1); int offset=(page-1)*PS;
         String qKey  = nvl(req.getParameter("qKey"),"");
         String qWord = nvl(req.getParameter("qWord"),"");
-        String w = "WHERE BD_IS_USE='Y' AND BD_CODE="+bdCode;
+        String w = "WHERE BD_CODE="+bdCode;   // v5.3: 원본 LAW_BOARD엔 BD_IS_USE 없음
         if (!qWord.isEmpty()) {
             String sw = qWord.replace("'","''");
             if      ("CONT".equals(qKey))  w += " AND BD_CONTENTS LIKE N'%"+sw+"%'";
@@ -278,25 +292,24 @@ public class FrontServlet extends HttpServlet {
         String qField = nvl(req.getParameter("qField"),"");
         String qLL    = nvl(req.getParameter("qLL"),"0");
         String qCate  = nvl(req.getParameter("qCate"),"0");
-        String w = "WHERE SC_IS_USE='Y'";
-        if (!qWord.isEmpty())  w += " AND SC_TITLE LIKE N'%"+qWord.replace("'","''")+"%'";
-        if (!qField.isEmpty()) w += " AND SC_TYPE=N'"+qField.replace("'","''")+"'";
-        if (!"0".equals(qLL)   && !qLL.isEmpty())   w += " AND SC_LL_IDX="+toInt(qLL,0);
-        if (!"0".equals(qCate) && !qCate.isEmpty()) w += " AND SC_CATE="+toInt(qCate,0);
-        List<Map<String,Object>> list = sql("SELECT SC_IDX,SC_TITLE,SC_DESC,SC_TYPE FROM dpl_shortclass "+w+" ORDER BY SC_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        // v5.3: 원본 LAW_SHORTCLASS 컬럼(LS_*) 기준. JSP 호환 위해 기존 별칭(SC_*)으로 매핑.
+        String w = "WHERE LS_SHOWYN='Y'";
+        if (!qWord.isEmpty())  w += " AND LS_TITLE LIKE N'%"+qWord.replace("'","''")+"%'";
+        if (!qField.isEmpty()) w += " AND LS_DIV=N'"+qField.replace("'","''")+"'";
+        List<Map<String,Object>> list = sql("SELECT LS_IDX AS SC_IDX,LS_TITLE AS SC_TITLE,ISNULL(LS_CONTENTS,'') AS SC_DESC,ISNULL(LS_DIV,'') AS SC_TYPE FROM dpl_shortclass "+w+" ORDER BY LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_shortclass "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
         req.setAttribute("qWord",qWord); req.setAttribute("qField",qField);
         req.setAttribute("qLL",qLL); req.setAttribute("qCate",qCate);
-        req.setAttribute("featured",sql("SELECT TOP 4 SC_IDX,SC_TITLE,SC_DESC,SC_TYPE FROM dpl_shortclass WHERE SC_IS_USE='Y' ORDER BY SC_IDX DESC"));
+        req.setAttribute("featured",sql("SELECT TOP 4 LS_IDX AS SC_IDX,LS_TITLE AS SC_TITLE,ISNULL(LS_CONTENTS,'') AS SC_DESC,ISNULL(LS_DIV,'') AS SC_TYPE FROM dpl_shortclass WHERE LS_SHOWYN='Y' ORDER BY LS_IDX DESC"));
         req.getRequestDispatcher("/jsp/front/front_shortclass_list.jsp").forward(req, resp);
     }
 
     // ── 숏클래스 상세 ──────────────────────────────────────────────
     private void doShortclassView(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         int idx = toInt(req.getParameter("sc_idx"),0);
-        List<Map<String,Object>> rows = idx>0?sql("SELECT SC_IDX,SC_TITLE,SC_DESC,SC_TYPE,CONVERT(NVARCHAR(10),SC_REG_DATE,120) AS SC_REG_DATE FROM dpl_shortclass WHERE SC_IDX="+idx):new ArrayList<>();
+        List<Map<String,Object>> rows = idx>0?sql("SELECT LS_IDX AS SC_IDX,LS_TITLE AS SC_TITLE,ISNULL(LS_CONTENTS,'') AS SC_DESC,ISNULL(LS_DIV,'') AS SC_TYPE,CONVERT(NVARCHAR(10),LS_REG_DATE,120) AS SC_REG_DATE FROM dpl_shortclass WHERE LS_IDX="+idx):new ArrayList<>();
         req.setAttribute("info",rows.isEmpty()?new LinkedHashMap<>():rows.get(0));
         req.getRequestDispatcher("/jsp/front/front_shortclass_view.jsp").forward(req, resp);
     }
@@ -327,28 +340,32 @@ public class FrontServlet extends HttpServlet {
                 + legalBase+" ORDER BY d.LD_IDX DESC");
             cntLegal = countSql("SELECT COUNT(*) "+legalBase);
 
-            // 위해정보 = dpl_riskdb
-            String riskBase = "FROM dpl_riskdb WHERE RD_IS_USE='Y' AND (RD_TITLE LIKE N'%"+sw+"%' OR ISNULL(RD_FACTOR,'') LIKE N'%"+sw+"%')";
-            riskdbResult = sql("SELECT TOP 5 RD_IDX,RD_TITLE,ISNULL(RD_TYPE,'') AS RD_TYPE,ISNULL(RD_FACTOR,'') AS RD_FACTOR,"
-                + "ISNULL(RD_SOURCE,'') AS RD_SOURCE,ISNULL(RD_LINK,'') AS RD_LINK,"
-                + "CONVERT(NVARCHAR(10),RD_REG_DATE,120) AS RD_REG_DATE "
-                + riskBase+" ORDER BY RD_IDX DESC");
+            // 위해정보 = dpl_riskdb (v5.3: 원본 LR_* → JSP 호환 별칭 RD_*)
+            String riskBase = "FROM dpl_riskdb WHERE (LR_TITLE LIKE N'%"+sw+"%' OR ISNULL(LR_FACTOR,'') LIKE N'%"+sw+"%')";
+            riskdbResult = sql("SELECT TOP 5 LR_IDX AS RD_IDX,LR_TITLE AS RD_TITLE,ISNULL(LR_TYPE,'') AS RD_TYPE,ISNULL(LR_FACTOR,'') AS RD_FACTOR,"
+                + "ISNULL(LR_SOURCE,'') AS RD_SOURCE,ISNULL(LR_URL,'') AS RD_LINK,"
+                + "CONVERT(NVARCHAR(10),LR_REG_DATE,120) AS RD_REG_DATE "
+                + riskBase+" ORDER BY LR_IDX DESC");
             cntRiskdb = countSql("SELECT COUNT(*) "+riskBase);
 
-            // 롯데 스탠다드 = dpl_standard
-            String stdBase = "FROM dpl_standard WHERE ST_IS_USE='Y' AND (ST_TITLE LIKE N'%"+sw+"%' OR ISNULL(ST_ITEMS,'') LIKE N'%"+sw+"%' OR ISNULL(ST_CODE,'') LIKE N'%"+sw+"%')";
-            standardResult = sql("SELECT TOP 5 ST_IDX,ISNULL(ST_DIV,'') AS ST_DIV,ISNULL(ST_CODE,'') AS ST_CODE,ST_TITLE,"
-                + "ISNULL(ST_ITEMS,'') AS ST_ITEMS,ISNULL(ST_VER_DATE,'') AS ST_VER_DATE "
-                + stdBase+" ORDER BY ST_IDX DESC");
+            // 롯데 스탠다드 = dpl_standard (v5.3: 원본 LS_* → JSP 호환 별칭 ST_*)
+            String stdBase = "FROM dpl_standard WHERE (LS_TITLE LIKE N'%"+sw+"%' OR ISNULL(LS_ITEMS,'') LIKE N'%"+sw+"%' OR ISNULL(LS_CODE,'') LIKE N'%"+sw+"%')";
+            standardResult = sql("SELECT TOP 5 LS_IDX AS ST_IDX,ISNULL(LS_DIV,'') AS ST_DIV,ISNULL(LS_CODE,'') AS ST_CODE,LS_TITLE AS ST_TITLE,"
+                + "ISNULL(LS_ITEMS,'') AS ST_ITEMS,ISNULL(LS_REV_DATE,'') AS ST_VER_DATE "
+                + stdBase+" ORDER BY LS_IDX DESC");
             cntStandard = countSql("SELECT COUNT(*) "+stdBase);
 
-            // 숏클래스 = dpl_shortclass (+규제법률 LL_TITLE via SC_LL_IDX)
-            String scBase = "FROM dpl_shortclass s LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=s.SC_LL_IDX "
-                + "WHERE s.SC_IS_USE='Y' AND (s.SC_TITLE LIKE N'%"+sw+"%' OR ISNULL(s.SC_DESC,'') LIKE N'%"+sw+"%')";
-            shortclassResult = sql("SELECT TOP 5 s.SC_IDX,s.SC_TITLE,ISNULL(s.SC_DESC,'') AS SC_DESC,ISNULL(s.SC_TYPE,'') AS SC_TYPE,"
-                + "ISNULL(s.SC_THUMB_URL,'') AS SC_THUMB_URL,ISNULL(l.LL_TITLE,'') AS LL_TITLE,"
-                + "CONVERT(NVARCHAR(10),s.SC_REG_DATE,120) AS SC_REG_DATE "
-                + scBase+" ORDER BY s.SC_IDX DESC");
+            // 숏클래스 = dpl_shortclass (v5.3: 원본 LS_* → JSP 호환 별칭 SC_*.
+            //   규제법률 연결은 원본 체인 LS.LN_IDX → dpl_notify.LR_IDX → dpl_regulation.LL_IDX)
+            String scBase = "FROM dpl_shortclass s "
+                + "LEFT JOIN dpl_notify n ON n.LN_IDX=s.LN_IDX "
+                + "LEFT JOIN dpl_regulation r ON r.LR_IDX=n.LR_IDX "
+                + "LEFT JOIN dpl_regulation_legal l ON l.LL_IDX=r.LL_IDX "
+                + "WHERE s.LS_SHOWYN='Y' AND (s.LS_TITLE LIKE N'%"+sw+"%' OR ISNULL(s.LS_CONTENTS,'') LIKE N'%"+sw+"%')";
+            shortclassResult = sql("SELECT TOP 5 s.LS_IDX AS SC_IDX,s.LS_TITLE AS SC_TITLE,ISNULL(s.LS_CONTENTS,'') AS SC_DESC,ISNULL(s.LS_DIV,'') AS SC_TYPE,"
+                + "ISNULL(s.LS_THUMB_PATH,'') AS SC_THUMB_URL,ISNULL(l.LL_TITLE,'') AS LL_TITLE,"
+                + "CONVERT(NVARCHAR(10),s.LS_REG_DATE,120) AS SC_REG_DATE "
+                + scBase+" ORDER BY s.LS_IDX DESC");
             cntShortclass = countSql("SELECT COUNT(*) "+scBase);
         }
 

@@ -8,8 +8,8 @@ import java.util.*;
 
 /**
  * 관리자 위해정보DB 관리 — 원본 _admin/safetydb/riskdb_{list,form,proc}.asp 정합
- * URL: /riskdb_admin/?mode=list|form|proc   테이블: dpl_riskdb (RD_*)
- * 결함구분 RD_TYPE(화학적/물리적/생물학적/전기적/환경적결함 — 데모 F4 실값), 등급 RD_LEVEL(1관심~4심각)
+ * URL: /riskdb_admin/?mode=list|form|proc   테이블: dpl_riskdb (LR_* — v5.3 원본 LAW_RISKDB 컬럼 미러)
+ * 결함구분 LR_TYPE(화학적/물리적/생물학적/전기적/환경적결함 — 데모 F4 실값), 등급 LR_LEVEL(1관심~4심각)
  */
 public class RiskdbAdminServlet extends HttpServlet {
     private static final int PS = 10;
@@ -36,14 +36,14 @@ public class RiskdbAdminServlet extends HttpServlet {
         String w = "WHERE 1=1";
         if (!qWord.isEmpty()) {
             String sw = qWord.replace("'","''");
-            if      ("TITLE".equals(qKey))  w += " AND RD_TITLE LIKE N'%"+sw+"%'";
-            else if ("FACTOR".equals(qKey)) w += " AND ISNULL(RD_FACTOR,'') LIKE N'%"+sw+"%'";
-            else w += " AND (RD_TITLE LIKE N'%"+sw+"%' OR ISNULL(RD_FACTOR,'') LIKE N'%"+sw+"%')";
+            if      ("TITLE".equals(qKey))  w += " AND LR_TITLE LIKE N'%"+sw+"%'";
+            else if ("FACTOR".equals(qKey)) w += " AND ISNULL(LR_FACTOR,'') LIKE N'%"+sw+"%'";
+            else w += " AND (LR_TITLE LIKE N'%"+sw+"%' OR ISNULL(LR_FACTOR,'') LIKE N'%"+sw+"%')";
         }
-        List<Map<String,Object>> list = sql("SELECT RD_IDX,RD_TITLE,ISNULL(RD_TYPE,'') AS RD_TYPE,"
-            + "ISNULL(RD_FACTOR,'') AS RD_FACTOR,ISNULL(RD_LEVEL,1) AS RD_LEVEL,ISNULL(RD_SOURCE,'') AS RD_SOURCE,"
-            + "RD_IS_USE,CONVERT(NVARCHAR(10),RD_REG_DATE,120) AS RD_REG_DATE "
-            + "FROM dpl_riskdb "+w+" ORDER BY RD_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        List<Map<String,Object>> list = sql("SELECT LR_IDX,LR_TITLE,ISNULL(LR_TYPE,'') AS LR_TYPE,"
+            + "ISNULL(LR_FACTOR,'') AS LR_FACTOR,ISNULL(LR_LEVEL,1) AS LR_LEVEL,ISNULL(LR_SOURCE,'') AS LR_SOURCE,"
+            + "CONVERT(NVARCHAR(10),LR_REG_DATE,120) AS LR_REG_DATE "
+            + "FROM dpl_riskdb "+w+" ORDER BY LR_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_riskdb "+w);
 
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
@@ -56,10 +56,10 @@ public class RiskdbAdminServlet extends HttpServlet {
         int idx = toInt(req.getParameter("rd_idx"), 0);
         Map<String,Object> info = null;
         if (idx>0) {
-            List<Map<String,Object>> rows = sql("SELECT RD_IDX,RD_TITLE,ISNULL(RD_TYPE,'') AS RD_TYPE,"
-                + "ISNULL(RD_FACTOR,'') AS RD_FACTOR,ISNULL(RD_LEVEL,1) AS RD_LEVEL,ISNULL(RD_SOURCE,'') AS RD_SOURCE,"
-                + "ISNULL(RD_LINK,'') AS RD_LINK,ISNULL(RD_CONTENT,'') AS RD_CONTENT,RD_IS_USE "
-                + "FROM dpl_riskdb WHERE RD_IDX="+idx);
+            List<Map<String,Object>> rows = sql("SELECT LR_IDX,LR_TITLE,ISNULL(LR_TYPE,'') AS LR_TYPE,"
+                + "ISNULL(LR_FACTOR,'') AS LR_FACTOR,ISNULL(LR_LEVEL,1) AS LR_LEVEL,ISNULL(LR_SOURCE,'') AS LR_SOURCE,"
+                + "ISNULL(LR_URL,'') AS LR_URL,ISNULL(LR_CONTENTS,'') AS LR_CONTENTS "
+                + "FROM dpl_riskdb WHERE LR_IDX="+idx);
             if (!rows.isEmpty()) info = rows.get(0);
         }
         req.setAttribute("info",info); req.setAttribute("rdIdx",idx);
@@ -88,21 +88,21 @@ public class RiskdbAdminServlet extends HttpServlet {
             try (Connection conn = DBPool.getConnection()) {
                 if ("ADD".equals(action)) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "INSERT INTO dpl_riskdb (RD_TITLE,RD_TYPE,RD_FACTOR,RD_LEVEL,RD_SOURCE,RD_LINK,RD_CONTENT,RD_CATE,RD_IS_USE,RD_REG_DATE) "
-                        + "VALUES (?,?,?,?,?,?,?,0,?,GETDATE())")) {
+                        "INSERT INTO dpl_riskdb (LR_TITLE,LR_TYPE,LR_FACTOR,LR_LEVEL,LR_SOURCE,LR_URL,LR_CONTENTS,LR_REG_DATE) "
+                        + "VALUES (?,?,?,?,?,?,?,GETDATE())")) {
                         ps.setString(1,title); ps.setString(2,type); ps.setString(3,factor); ps.setInt(4,level);
-                        ps.setString(5,source); ps.setString(6,link); ps.setString(7,cont); ps.setString(8,isUse);
+                        ps.setString(5,source); ps.setString(6,link); ps.setString(7,cont);
                         ps.executeUpdate();
                     }
                 } else if ("MOD".equals(action) && idx>0) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE dpl_riskdb SET RD_TITLE=?,RD_TYPE=?,RD_FACTOR=?,RD_LEVEL=?,RD_SOURCE=?,RD_LINK=?,RD_CONTENT=?,RD_IS_USE=? WHERE RD_IDX=?")) {
+                        "UPDATE dpl_riskdb SET LR_TITLE=?,LR_TYPE=?,LR_FACTOR=?,LR_LEVEL=?,LR_SOURCE=?,LR_URL=?,LR_CONTENTS=?,LR_UPD_DATE=GETDATE() WHERE LR_IDX=?")) {
                         ps.setString(1,title); ps.setString(2,type); ps.setString(3,factor); ps.setInt(4,level);
-                        ps.setString(5,source); ps.setString(6,link); ps.setString(7,cont); ps.setString(8,isUse); ps.setInt(9,idx);
+                        ps.setString(5,source); ps.setString(6,link); ps.setString(7,cont); ps.setInt(8,idx);
                         ps.executeUpdate();
                     }
                 } else if ("DEL".equals(action) && idx>0) {
-                    try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dpl_riskdb WHERE RD_IDX=?")) {
+                    try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dpl_riskdb WHERE LR_IDX=?")) {
                         ps.setInt(1,idx); ps.executeUpdate();
                     }
                 }
