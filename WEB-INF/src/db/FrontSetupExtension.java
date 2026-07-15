@@ -13,6 +13,7 @@ public class FrontSetupExtension {
         // ── 카테고리 (원본 LAW_CATEGORY 컬럼 미러 — 중분류 depth1 / 소분류 depth2) ──
         // v5.3: LC_ROOT_IDX는 원본에 없는 자체 컬럼이었음 → 제거하고 원본 11컬럼으로 정정
         dropIfOldSchema(conn, "dpl_law_category", "LC_ROOT_IDX");
+        dropIfNotMax(conn, "dpl_law_category", "LC_CATEGORY");   // v5.3.2 길이 가드
         exec(conn, """
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_law_category')
             CREATE TABLE dpl_law_category (
@@ -39,6 +40,10 @@ public class FrontSetupExtension {
         dropIfOldSchema(conn, "dpl_riskdb",     "RD_IDX");
         dropIfOldSchema(conn, "dpl_standard",   "ST_IDX");
         dropIfOldSchema(conn, "dpl_shortclass", "SC_IDX");
+        // v5.3.2: 길이 기준 가드 — 대표 컬럼이 MAX(-1)가 아니면 구(짧은) 스키마 → DROP
+        dropIfNotMax(conn, "dpl_riskdb",     "LR_TITLE");
+        dropIfNotMax(conn, "dpl_standard",   "LS_TITLE");
+        dropIfNotMax(conn, "dpl_shortclass", "LS_TITLE");
         // 원본 LAW_RISKDB 컬럼 미러
         exec(conn, """
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_riskdb')
@@ -120,7 +125,13 @@ public class FrontSetupExtension {
         // ── 게시판 (원본 law_board 컬럼 전체 미러) ──
         // BD_CODE: 1=법규 제·개정 / 2=제품안전뉴스(글로벌 안전정보) / 6=유용한정보 / 8=동영상 / 10=안전센터
         // v5.3: 컬럼 길이는 원본 실측 기준 넉넉히 (BD_SUBTITLE/BD_CONTENTS = 원본 text 형)
-        dropIfOldSchema(conn, "dpl_law_board", "BD_ETC_COLS_4", true);  // 구 12컬럼 스키마면 DROP
+        // v5.3.2: 길이 기준 가드 — BD_TITLE이 MAX(-1)가 아니면 구 스키마로 보고 DROP.
+        // (v5.3 중간 배포본은 24컬럼이지만 NVARCHAR(300)이라 원본 text 데이터가 절삭됨)
+        exec(conn, """
+            IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                       WHERE TABLE_NAME='dpl_law_board' AND COLUMN_NAME='BD_TITLE'
+                         AND CHARACTER_MAXIMUM_LENGTH <> -1)
+            DROP TABLE dpl_law_board""");
         exec(conn, """
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='dpl_law_board')
             CREATE TABLE dpl_law_board (
@@ -150,6 +161,13 @@ public class FrontSetupExtension {
                 BD_UPD_IP NVARCHAR(MAX)
             )""");
         System.out.println("[DPL] 프론트 테이블 생성 완료");
+    }
+
+    /** 문자열 컬럼이 MAX(-1)가 아니면 구 스키마로 보고 DROP */
+    private static void dropIfNotMax(Connection conn, String table, String col) throws Exception {
+        exec(conn, "IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS "
+                 + "WHERE TABLE_NAME='"+table+"' AND COLUMN_NAME='"+col+"' AND CHARACTER_MAXIMUM_LENGTH <> -1) "
+                 + "DROP TABLE "+table);
     }
 
     /** 구 스키마 감지 시 DROP (해당 컬럼이 존재하면 구 스키마로 판단) */
