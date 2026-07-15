@@ -377,7 +377,13 @@ public class FrontServlet extends HttpServlet {
                 + "CONVERT(NVARCHAR(10),s.LS_REG_DATE,120) AS SC_REG_DATE "
                 + scBase+" ORDER BY s.LS_IDX DESC");
             // v5.4: 원본 search_result_list.asp의 FN_ClearTag(ar4_ls_contents) 정합
-            for (Map<String,Object> r : shortclassResult) r.put("sc_desc", summarize(r.get("sc_desc"), 150));
+            for (Map<String,Object> r : shortclassResult) {
+                r.put("sc_desc", summarize(r.get("sc_desc"), 150));
+                // v5.4.4: 썸네일 경로가 원본 mPRD 서버(/law_new/_upload/...)를 가리키면
+                // 데모에선 파일이 없어 404가 확정 → 아예 비워서 요청 자체를 막는다.
+                Object th = r.get("sc_thumb_url");
+                if (th != null && String.valueOf(th).startsWith("/law_new/")) r.put("sc_thumb_url", "");
+            }
             cntShortclass = countSql("SELECT COUNT(*) "+scBase);
         }
 
