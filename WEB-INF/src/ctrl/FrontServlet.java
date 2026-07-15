@@ -81,13 +81,13 @@ public class FrontServlet extends HttpServlet {
         // 제품안전뉴스 = 원본 ctrlBoard(BBS_LEGAL_SAFETY=2) → dpl_law_board BD_CODE=2 (v5.3)
         req.setAttribute("safetyNews",  sql("SELECT TOP 5 BD_IDX,BD_TITLE,ISNULL(BD_ETC_COLS_2,'') AS BD_ETC_COLS_2,ISNULL(BD_ETC_COLS_4,'1') AS BD_ETC_COLS_4 FROM dpl_law_board WHERE BD_CODE=2 ORDER BY BD_IDX DESC"));
         List<Map<String,Object>> mshort = sql("SELECT TOP 8 LS_IDX,LS_TITLE,ISNULL(LS_CONTENTS,'') AS LS_CONTENTS FROM dpl_shortclass WHERE LS_SHOWYN='Y' ORDER BY LS_IDX DESC");
-        for (Map<String,Object> r : mshort) r.put("LS_CONTENTS", summarize(r.get("LS_CONTENTS"), 100));
+        for (Map<String,Object> r : mshort) r.put("ls_contents", summarize(r.get("ls_contents"), 100));
         req.setAttribute("mainShort", mshort);
         List<Map<String,Object>> rv = sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_CODE=8 ORDER BY BD_IDX DESC");
-        for (Map<String,Object> r : rv) r.put("BD_CONTENTS", summarize(r.get("BD_CONTENTS"), 100));
+        for (Map<String,Object> r : rv) r.put("bd_contents", summarize(r.get("bd_contents"), 100));
         req.setAttribute("refVideo", rv);
         List<Map<String,Object>> ri = sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_CODE=6 ORDER BY BD_IDX DESC");
-        for (Map<String,Object> r : ri) r.put("BD_CONTENTS", summarize(r.get("BD_CONTENTS"), 100));
+        for (Map<String,Object> r : ri) r.put("bd_contents", summarize(r.get("bd_contents"), 100));
         req.setAttribute("refInfo", ri);
         // 법규 제·개정 = 원본 ctrlBoard(BBS_LEGAL_REVISE=1) → dpl_law_board BD_CODE=1 (v5.3)
         req.setAttribute("legalNews",   sql("SELECT TOP 5 BD_IDX,BD_TITLE,ISNULL(BD_ETC_COLS_1,'') AS BD_ETC_COLS_1,CONVERT(NVARCHAR(10),BD_REG_DATE,120) AS BD_REG_DATE FROM dpl_law_board WHERE BD_CODE=1 ORDER BY BD_IDX DESC"));
@@ -304,14 +304,14 @@ public class FrontServlet extends HttpServlet {
         if (!qField.isEmpty()) w += " AND LS_DIV=N'"+qField.replace("'","''")+"'";
         List<Map<String,Object>> list = sql("SELECT LS_IDX AS SC_IDX,LS_TITLE AS SC_TITLE,ISNULL(LS_CONTENTS,'') AS SC_DESC,ISNULL(LS_DIV,'') AS SC_TYPE FROM dpl_shortclass "+w+" ORDER BY LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         // v5.4: 원본 FN_ClearTag() 정합 — 에디터 본문의 태그 제거 후 요약 (raw HTML 노출 방지)
-        for (Map<String,Object> r : list) r.put("SC_DESC", summarize(r.get("SC_DESC"), 120));
+        for (Map<String,Object> r : list) r.put("sc_desc", summarize(r.get("sc_desc"), 120));
         int total = countSql("SELECT COUNT(*) FROM dpl_shortclass "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
         req.setAttribute("qWord",qWord); req.setAttribute("qField",qField);
         req.setAttribute("qLL",qLL); req.setAttribute("qCate",qCate);
         List<Map<String,Object>> feat = sql("SELECT TOP 4 LS_IDX AS SC_IDX,LS_TITLE AS SC_TITLE,ISNULL(LS_CONTENTS,'') AS SC_DESC,ISNULL(LS_DIV,'') AS SC_TYPE FROM dpl_shortclass WHERE LS_SHOWYN='Y' ORDER BY LS_IDX DESC");
-        for (Map<String,Object> r : feat) r.put("SC_DESC", summarize(r.get("SC_DESC"), 120));
+        for (Map<String,Object> r : feat) r.put("sc_desc", summarize(r.get("sc_desc"), 120));
         req.setAttribute("featured", feat);
         req.getRequestDispatcher("/jsp/front/front_shortclass_list.jsp").forward(req, resp);
     }
@@ -377,7 +377,7 @@ public class FrontServlet extends HttpServlet {
                 + "CONVERT(NVARCHAR(10),s.LS_REG_DATE,120) AS SC_REG_DATE "
                 + scBase+" ORDER BY s.LS_IDX DESC");
             // v5.4: 원본 search_result_list.asp의 FN_ClearTag(ar4_ls_contents) 정합
-            for (Map<String,Object> r : shortclassResult) r.put("SC_DESC", summarize(r.get("SC_DESC"), 150));
+            for (Map<String,Object> r : shortclassResult) r.put("sc_desc", summarize(r.get("sc_desc"), 150));
             cntShortclass = countSql("SELECT COUNT(*) "+scBase);
         }
 
@@ -427,12 +427,16 @@ public class FrontServlet extends HttpServlet {
     private static String clearTag(Object o) {
         if (o == null) return "";
         String t = String.valueOf(o);
-        t = t.replaceAll("(?is)<script.*?</script>", " ");
-        t = t.replaceAll("(?is)<style.*?</style>", " ");
-        t = t.replaceAll("(?is)<(.*?)>", "");
-        t = t.replace("&nbsp;", " ").replace("&amp;", "&")
-             .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"")
-             .replace("&#39;", "'").replace("&#034;", "\"");
+        // 실 DB 본문은 엔티티가 이중 인코딩된 경우가 있어(예: &lt;img ... &#034;),
+        // 디코드 → 태그제거 순서로 2회 반복해야 완전히 제거된다.
+        for (int i = 0; i < 2; i++) {
+            t = t.replace("&nbsp;", " ").replace("&#034;", "\"").replace("&#39;", "'")
+                 .replace("&quot;", "\"").replace("&lt;", "<").replace("&gt;", ">")
+                 .replace("&amp;", "&");
+            t = t.replaceAll("(?is)<script.*?</script>", " ");
+            t = t.replaceAll("(?is)<style.*?</style>", " ");
+            t = t.replaceAll("(?is)<(.*?)>", "");
+        }
         return t.replaceAll("\\s+", " ").trim();
     }
 
