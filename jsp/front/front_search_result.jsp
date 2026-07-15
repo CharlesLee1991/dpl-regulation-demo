@@ -178,7 +178,7 @@ $(document).ready(function(){ $("#frmSearch").submit(jfSearch); });
             <c:forEach var="row" items="${shortclassResult}">
               <li>
                 <a href="/front/support/view?sc_idx=${row.sc_idx}" class="item">
-                  <c:if test="${not empty row.sc_thumb_url}"><div class="img-wrap"><img src="${fn:escapeXml(row.sc_thumb_url)}" alt="${fn:escapeXml(row.sc_title)}"></div></c:if>
+                  <c:if test="${not empty row.sc_thumb_url}"><div class="img-wrap"><img src="${fn:escapeXml(row.sc_thumb_url)}" alt="${fn:escapeXml(row.sc_title)}" onerror="this.closest('.img-wrap').style.display='none'"></div></c:if>
                   <div class="data-wrap">
                     <div class="category"><span class="legal">규제법률</span>${fn:escapeXml(row.ll_title)}</div>
                     <div class="subject"><strong class="shortclass-title">${fn:escapeXml(row.sc_title)}</strong></div>
