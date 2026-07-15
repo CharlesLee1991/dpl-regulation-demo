@@ -155,13 +155,14 @@ public class AjaxServlet extends HttpServlet {
                 case "mirror_reload": {
                     // v2: 실 LAW_* → dpl_* 미러 재적재. LAW_*는 READ only, dpl_*만 write.
                     // 핵심 수정: 테이블마다 독립 커넥션 → IDENTITY_INSERT 세션 누수 원천 차단 + finally OFF 보장.
+                    // v3: pairs[2] = 추가 매핑 "미러컬럼=원본컬럼" (리네이밍된 컬럼용, 없으면 "")
                     String[][] pairs = {
-                        {"dpl_regulation_legal","LAW_REGULATION_LEGAL"},
-                        {"dpl_regulation","LAW_REGULATION"},
-                        {"dpl_notify","LAW_NOTIFY"},
-                        {"dpl_safety","LAW_SAFETY"},
-                        {"dpl_items","LAW_ITEMS"},
-                        {"dpl_items_detail","LAW_ITEMS_DETAIL"}
+                        {"dpl_regulation_legal","LAW_REGULATION_LEGAL",""},
+                        {"dpl_regulation","LAW_REGULATION",""},
+                        {"dpl_notify","LAW_NOTIFY","LN_TITLE=LN_NOTIFY"},
+                        {"dpl_safety","LAW_SAFETY",""},
+                        {"dpl_items","LAW_ITEMS",""},
+                        {"dpl_items_detail","LAW_ITEMS_DETAIL",""}
                     };
                     String[] delOrder = {"dpl_items_detail","dpl_items","dpl_safety","dpl_notify","dpl_regulation","dpl_regulation_legal"};
                     StringBuilder rpt = new StringBuilder("{\"status\":\"OK\",\"tables\":{");
@@ -177,7 +178,7 @@ public class AjaxServlet extends HttpServlet {
                     // 2) 부모→자식 순서 적재. 테이블당 커넥션 1개 (IDENTITY_INSERT 격리).
                     boolean first = true;
                     for (String[] p : pairs) {
-                        String dpl = p[0], law = p[1];
+                        String dpl = p[0], law = p[1], extra = p.length > 2 ? p[2] : "";
                         String res;
                         try (java.sql.Connection tc = db.DBPool.getConnection()) {
                             java.util.List<String> cols = new java.util.ArrayList<>();
@@ -188,16 +189,26 @@ public class AjaxServlet extends HttpServlet {
                                   + "WHERE c1.TABLE_NAME='"+dpl+"' AND c2.TABLE_NAME='"+law+"'")) {
                                 while (rs.next()) cols.add("["+rs.getString(1)+"]");
                             }
-                            if (cols.isEmpty()) {
+                            // INSERT 대상(미러) / SELECT 원본 컬럼 분리 — 교집합은 동일, extra는 리네이밍
+                            java.util.List<String> insCols = new java.util.ArrayList<>(cols);
+                            java.util.List<String> selCols = new java.util.ArrayList<>(cols);
+                            if (extra != null && !extra.isEmpty()) {
+                                for (String m : extra.split(",")) {
+                                    String[] kv = m.split("=");
+                                    if (kv.length == 2) { insCols.add("["+kv[0].trim()+"]"); selCols.add("["+kv[1].trim()+"]"); }
+                                }
+                            }
+                            if (insCols.isEmpty()) {
                                 res = "{\"ok\":false,\"err\":\"no common columns\"}";
                             } else {
-                                String colList = String.join(",", cols);
-                                boolean hasId = colList.toUpperCase().contains("_IDX]");
+                                String insList = String.join(",", insCols);
+                                String selList = String.join(",", selCols);
+                                boolean hasId = insList.toUpperCase().contains("_IDX]");
                                 java.sql.Statement ws = tc.createStatement();
                                 try {
                                     if (hasId) ws.execute("SET IDENTITY_INSERT "+dpl+" ON");
-                                    int n = ws.executeUpdate("INSERT INTO "+dpl+" ("+colList+") SELECT "+colList+" FROM "+law);
-                                    res = "{\"ok\":true,\"rows\":"+n+",\"cols\":"+cols.size()+"}";
+                                    int n = ws.executeUpdate("INSERT INTO "+dpl+" ("+insList+") SELECT "+selList+" FROM "+law);
+                                    res = "{\"ok\":true,\"rows\":"+n+",\"cols\":"+insCols.size()+"}";
                                 } finally {
                                     if (hasId) { try { ws.execute("SET IDENTITY_INSERT "+dpl+" OFF"); } catch(Exception ignored){} }
                                     try { ws.close(); } catch(Exception ignored){}
