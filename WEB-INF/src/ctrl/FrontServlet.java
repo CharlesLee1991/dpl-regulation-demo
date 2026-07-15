@@ -80,9 +80,15 @@ public class FrontServlet extends HttpServlet {
         req.setAttribute("cntStandard", countSql("SELECT COUNT(*) FROM dpl_standard"));
         // 제품안전뉴스 = 원본 ctrlBoard(BBS_LEGAL_SAFETY=2) → dpl_law_board BD_CODE=2 (v5.3)
         req.setAttribute("safetyNews",  sql("SELECT TOP 5 BD_IDX,BD_TITLE,ISNULL(BD_ETC_COLS_2,'') AS BD_ETC_COLS_2,ISNULL(BD_ETC_COLS_4,'1') AS BD_ETC_COLS_4 FROM dpl_law_board WHERE BD_CODE=2 ORDER BY BD_IDX DESC"));
-        req.setAttribute("mainShort",   sql("SELECT TOP 8 LS_IDX,LS_TITLE,ISNULL(LS_CONTENTS,'') AS LS_CONTENTS FROM dpl_shortclass WHERE LS_SHOWYN='Y' ORDER BY LS_IDX DESC"));
-        req.setAttribute("refVideo",    sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_CODE=8 ORDER BY BD_IDX DESC"));
-        req.setAttribute("refInfo",     sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_CODE=6 ORDER BY BD_IDX DESC"));
+        List<Map<String,Object>> mshort = sql("SELECT TOP 8 LS_IDX,LS_TITLE,ISNULL(LS_CONTENTS,'') AS LS_CONTENTS FROM dpl_shortclass WHERE LS_SHOWYN='Y' ORDER BY LS_IDX DESC");
+        for (Map<String,Object> r : mshort) r.put("LS_CONTENTS", summarize(r.get("LS_CONTENTS"), 100));
+        req.setAttribute("mainShort", mshort);
+        List<Map<String,Object>> rv = sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_CODE=8 ORDER BY BD_IDX DESC");
+        for (Map<String,Object> r : rv) r.put("BD_CONTENTS", summarize(r.get("BD_CONTENTS"), 100));
+        req.setAttribute("refVideo", rv);
+        List<Map<String,Object>> ri = sql("SELECT TOP 4 BD_IDX,BD_TITLE,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS FROM dpl_law_board WHERE BD_CODE=6 ORDER BY BD_IDX DESC");
+        for (Map<String,Object> r : ri) r.put("BD_CONTENTS", summarize(r.get("BD_CONTENTS"), 100));
+        req.setAttribute("refInfo", ri);
         // 법규 제·개정 = 원본 ctrlBoard(BBS_LEGAL_REVISE=1) → dpl_law_board BD_CODE=1 (v5.3)
         req.setAttribute("legalNews",   sql("SELECT TOP 5 BD_IDX,BD_TITLE,ISNULL(BD_ETC_COLS_1,'') AS BD_ETC_COLS_1,CONVERT(NVARCHAR(10),BD_REG_DATE,120) AS BD_REG_DATE FROM dpl_law_board WHERE BD_CODE=1 ORDER BY BD_IDX DESC"));
         req.getRequestDispatcher("/jsp/front/front_main.jsp").forward(req, resp);
@@ -297,12 +303,16 @@ public class FrontServlet extends HttpServlet {
         if (!qWord.isEmpty())  w += " AND LS_TITLE LIKE N'%"+qWord.replace("'","''")+"%'";
         if (!qField.isEmpty()) w += " AND LS_DIV=N'"+qField.replace("'","''")+"'";
         List<Map<String,Object>> list = sql("SELECT LS_IDX AS SC_IDX,LS_TITLE AS SC_TITLE,ISNULL(LS_CONTENTS,'') AS SC_DESC,ISNULL(LS_DIV,'') AS SC_TYPE FROM dpl_shortclass "+w+" ORDER BY LS_IDX DESC OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
+        // v5.4: 원본 FN_ClearTag() 정합 — 에디터 본문의 태그 제거 후 요약 (raw HTML 노출 방지)
+        for (Map<String,Object> r : list) r.put("SC_DESC", summarize(r.get("SC_DESC"), 120));
         int total = countSql("SELECT COUNT(*) FROM dpl_shortclass "+w);
         req.setAttribute("list",list); req.setAttribute("total",total); req.setAttribute("page",page);
         req.setAttribute("pageCnt",total>0?(int)Math.ceil((double)total/PS):1);
         req.setAttribute("qWord",qWord); req.setAttribute("qField",qField);
         req.setAttribute("qLL",qLL); req.setAttribute("qCate",qCate);
-        req.setAttribute("featured",sql("SELECT TOP 4 LS_IDX AS SC_IDX,LS_TITLE AS SC_TITLE,ISNULL(LS_CONTENTS,'') AS SC_DESC,ISNULL(LS_DIV,'') AS SC_TYPE FROM dpl_shortclass WHERE LS_SHOWYN='Y' ORDER BY LS_IDX DESC"));
+        List<Map<String,Object>> feat = sql("SELECT TOP 4 LS_IDX AS SC_IDX,LS_TITLE AS SC_TITLE,ISNULL(LS_CONTENTS,'') AS SC_DESC,ISNULL(LS_DIV,'') AS SC_TYPE FROM dpl_shortclass WHERE LS_SHOWYN='Y' ORDER BY LS_IDX DESC");
+        for (Map<String,Object> r : feat) r.put("SC_DESC", summarize(r.get("SC_DESC"), 120));
+        req.setAttribute("featured", feat);
         req.getRequestDispatcher("/jsp/front/front_shortclass_list.jsp").forward(req, resp);
     }
 
@@ -366,6 +376,8 @@ public class FrontServlet extends HttpServlet {
                 + "ISNULL(s.LS_THUMB_PATH,'') AS SC_THUMB_URL,ISNULL(l.LL_TITLE,'') AS LL_TITLE,"
                 + "CONVERT(NVARCHAR(10),s.LS_REG_DATE,120) AS SC_REG_DATE "
                 + scBase+" ORDER BY s.LS_IDX DESC");
+            // v5.4: 원본 search_result_list.asp의 FN_ClearTag(ar4_ls_contents) 정합
+            for (Map<String,Object> r : shortclassResult) r.put("SC_DESC", summarize(r.get("SC_DESC"), 150));
             cntShortclass = countSql("SELECT COUNT(*) "+scBase);
         }
 
@@ -407,6 +419,29 @@ public class FrontServlet extends HttpServlet {
         } catch(Exception ignored){}
         return 0;
     }
+    /**
+     * 원본 _system/lib/fnc.Util.asp의 FN_ClearTag() 이식.
+     * 에디터 본문(LS_CONTENTS 등)에서 HTML 태그를 제거해 목록/검색 요약으로 쓰기 위함.
+     * 원본 패턴: "<(.*?)>" Global, IgnoreCase → 태그 제거 후 엔티티 복원.
+     */
+    private static String clearTag(Object o) {
+        if (o == null) return "";
+        String t = String.valueOf(o);
+        t = t.replaceAll("(?is)<script.*?</script>", " ");
+        t = t.replaceAll("(?is)<style.*?</style>", " ");
+        t = t.replaceAll("(?is)<(.*?)>", "");
+        t = t.replace("&nbsp;", " ").replace("&amp;", "&")
+             .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"")
+             .replace("&#39;", "'").replace("&#034;", "\"");
+        return t.replaceAll("\\s+", " ").trim();
+    }
+
+    /** 목록/검색 카드용 요약 — 태그 제거 후 길이 제한 */
+    private static String summarize(Object o, int max) {
+        String t = clearTag(o);
+        return (t.length() > max) ? t.substring(0, max) + "…" : t;
+    }
+
     private String nvl(String v, String def) { return (v==null||v.isEmpty())?def:v; }
     private int toInt(String v, int def) {
         if(v==null) return def;
