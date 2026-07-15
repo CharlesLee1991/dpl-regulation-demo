@@ -221,7 +221,32 @@ public class AjaxServlet extends HttpServlet {
                         rpt.append("\"").append(dpl).append("\":").append(res);
                         first = false;
                     }
-                    rpt.append("}}");
+                    rpt.append("}");
+                    // ── v4: 비정규화 FK backfill ────────────────────────────
+                    // 실 LAW_ITEMS(_DETAIL)에는 LL_IDX/LR_IDX 컬럼이 없다(체인 정규화).
+                    // 데모 dpl_* 는 비정규화 컬럼 보유 → 교집합 복사 시 DEFAULT 0 잔류
+                    // → 프론트 F2/통합검색의 상세링크(lr_idx=0)·관리법률/제도 공란·필터 0건 원인.
+                    // 실 체인: LD.LI_IDX → LAW_ITEMS.LN_IDX → LAW_NOTIFY.LR_IDX → LAW_REGULATION.LL_IDX
+                    // 미러 내부(dpl_*)만 UPDATE. 원본 LAW_* 무접촉.
+                    StringBuilder bf = new StringBuilder(",\"backfill\":{");
+                    try (java.sql.Connection bc = db.DBPool.getConnection();
+                         java.sql.Statement bs = bc.createStatement()) {
+                        int n1 = bs.executeUpdate(
+                            "UPDATE i SET i.LR_IDX=n.LR_IDX, i.LL_IDX=r.LL_IDX "
+                          + "FROM dpl_items i "
+                          + "JOIN dpl_notify n ON n.LN_IDX=i.LN_IDX "
+                          + "JOIN dpl_regulation r ON r.LR_IDX=n.LR_IDX");
+                        bf.append("\"dpl_items\":{\"ok\":true,\"rows\":").append(n1).append("}");
+                        int n2 = bs.executeUpdate(
+                            "UPDATE d SET d.LN_IDX=i.LN_IDX, d.LR_IDX=i.LR_IDX, d.LL_IDX=i.LL_IDX "
+                          + "FROM dpl_items_detail d "
+                          + "JOIN dpl_items i ON i.LI_IDX=d.LI_IDX");
+                        bf.append(",\"dpl_items_detail\":{\"ok\":true,\"rows\":").append(n2).append("}");
+                    } catch (Exception be) {
+                        bf.append("\"error\":\"").append(escape(be.getMessage())).append("\"");
+                    }
+                    bf.append("}");
+                    rpt.append(bf).append("}");
                     out.print(rpt.toString());
                     break;
                 }
