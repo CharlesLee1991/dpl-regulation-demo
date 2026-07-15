@@ -64,7 +64,7 @@ public class BoardServlet extends HttpServlet {
         }
 
         List<Map<String,Object>> list = sql("SELECT BD_IDX,BD_TITLE,ISNULL(BD_WRITER,'') AS BD_WRITER,"
-            + "ISNULL(BD_HIT,0) AS BD_HIT,BD_IS_USE,CONVERT(NVARCHAR(10),BD_REG_DATE,120) AS BD_REG_DATE "
+            + "ISNULL(BD_HIT,0) AS BD_HIT,'Y' AS BD_IS_USE,CONVERT(NVARCHAR(10),BD_REG_DATE,120) AS BD_REG_DATE "   // v5.3: 원본 LAW_BOARD엔 BD_IS_USE 없음 → JSP 호환 고정값
             + "FROM dpl_law_board "+w+" ORDER BY "+order+" OFFSET "+offset+" ROWS FETCH NEXT "+PS+" ROWS ONLY");
         int total = countSql("SELECT COUNT(*) FROM dpl_law_board "+w);
 
@@ -83,7 +83,7 @@ public class BoardServlet extends HttpServlet {
         if (idx>0) {
             List<Map<String,Object>> rows = sql("SELECT BD_IDX,BD_TITLE,ISNULL(BD_ETC_COLS_1,'') AS BD_ETC_COLS_1,"
                 + "ISNULL(BD_ETC_COLS_2,'') AS BD_ETC_COLS_2,ISNULL(BD_ETC_COLS_3,'') AS BD_ETC_COLS_3,"
-                + "ISNULL(BD_WRITER,'') AS BD_WRITER,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS,BD_IS_USE "
+                + "ISNULL(BD_WRITER,'') AS BD_WRITER,ISNULL(BD_CONTENTS,'') AS BD_CONTENTS,'Y' AS BD_IS_USE "
                 + "FROM dpl_law_board WHERE BD_IDX="+idx+" AND BD_CODE="+code);
             if (!rows.isEmpty()) info = rows.get(0);
         }
@@ -115,19 +115,19 @@ public class BoardServlet extends HttpServlet {
             try (Connection conn = DBPool.getConnection()) {
                 if ("ADD".equals(action)) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "INSERT INTO dpl_law_board (BD_CODE,BD_TITLE,BD_ETC_COLS_1,BD_ETC_COLS_2,BD_ETC_COLS_3,BD_WRITER,BD_CONTENTS,BD_HIT,BD_IS_USE,BD_REG_DATE) "
-                        + "VALUES (?,?,?,?,?,?,?,0,?,GETDATE())")) {
+                        "INSERT INTO dpl_law_board (BD_CODE,BD_TITLE,BD_ETC_COLS_1,BD_ETC_COLS_2,BD_ETC_COLS_3,BD_WRITER,BD_CONTENTS,BD_HIT,BD_REG_DATE) "
+                        + "VALUES (?,?,?,?,?,?,?,0,GETDATE())")) {
                         ps.setInt(1,code); ps.setString(2,title); ps.setString(3,cols1); ps.setString(4,cols2);
-                        ps.setString(5,cols3); ps.setString(6,writer); ps.setString(7,cont); ps.setString(8,isUse);
+                        ps.setString(5,cols3); ps.setString(6,writer); ps.setString(7,cont);
                         ps.executeUpdate();
                     }
                 } else if ("MOD".equals(action) && idx>0) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE dpl_law_board SET BD_TITLE=?,BD_ETC_COLS_1=?,BD_ETC_COLS_2=?,BD_ETC_COLS_3=?,BD_WRITER=?,BD_CONTENTS=?,BD_IS_USE=? "
+                        "UPDATE dpl_law_board SET BD_TITLE=?,BD_ETC_COLS_1=?,BD_ETC_COLS_2=?,BD_ETC_COLS_3=?,BD_WRITER=?,BD_CONTENTS=?,BD_UPD_DATE=GETDATE() "
                         + "WHERE BD_IDX=? AND BD_CODE=?")) {
                         ps.setString(1,title); ps.setString(2,cols1); ps.setString(3,cols2); ps.setString(4,cols3);
-                        ps.setString(5,writer); ps.setString(6,cont); ps.setString(7,isUse);
-                        ps.setInt(8,idx); ps.setInt(9,code);
+                        ps.setString(5,writer); ps.setString(6,cont);
+                        ps.setInt(7,idx); ps.setInt(8,code);
                         ps.executeUpdate();
                     }
                 } else if ("DEL".equals(action) && idx>0) {

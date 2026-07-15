@@ -90,14 +90,14 @@ public class CateAdminServlet extends HttpServlet {
             try (Connection conn = DBPool.getConnection()) {
                 if ("ADD".equals(action)) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "INSERT INTO dpl_law_category (LC_CATEGORY,LC_PARENT_IDX,LC_ROOT_IDX,LC_DEPTH,LC_IS_USE,LC_REG_DATE) VALUES (?,?,?,?,?,GETDATE())")) {
-                        ps.setString(1,name); ps.setInt(2,parent); ps.setInt(3,parent); ps.setInt(4,d); ps.setString(5,isUse);
+                        "INSERT INTO dpl_law_category (LC_CATEGORY,LC_PARENT_IDX,LC_DEPTH,LC_IS_USE,LC_REG_DATE) VALUES (?,?,?,?,GETDATE())")) {
+                        ps.setString(1,name); ps.setInt(2,parent); ps.setInt(3,d); ps.setString(4,isUse);
                         ps.executeUpdate();
                     }
                 } else if ("MOD".equals(action) && idx>0) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE dpl_law_category SET LC_CATEGORY=?,LC_PARENT_IDX=?,LC_ROOT_IDX=?,LC_IS_USE=? WHERE LC_IDX=?")) {
-                        ps.setString(1,name); ps.setInt(2,parent); ps.setInt(3,parent); ps.setString(4,isUse); ps.setInt(5,idx);
+                        "UPDATE dpl_law_category SET LC_CATEGORY=?,LC_PARENT_IDX=?,LC_IS_USE=?,LC_UPD_DATE=GETDATE() WHERE LC_IDX=?")) {
+                        ps.setString(1,name); ps.setInt(2,parent); ps.setString(3,isUse); ps.setInt(4,idx);
                         ps.executeUpdate();
                     }
                 } else if ("DEL".equals(action) && idx>0) {
